@@ -1,6 +1,8 @@
 import { X, User, Settings, Package, Heart, LogOut, ChevronRight, Bell, Shield, CreditCard, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
+import { useAuth } from "../lib/AuthContext";
+import api from "../lib/api";
 
 interface ProfileDrawerProps {
   isOpen: boolean;
@@ -8,12 +10,17 @@ interface ProfileDrawerProps {
 }
 
 export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
-  const user = {
-    name: "Niloy Banik",
-    email: "niloybanik084@gmail.com",
-    avatar: "https://picsum.photos/seed/user123/200/200",
-    phone: "+880 1234 567890",
-    memberSince: "April 2024"
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await api.post('/logout');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      logout();
+      onClose();
+    }
   };
 
   const menuItems = [
@@ -25,6 +32,8 @@ export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
     { icon: Shield, label: "Privacy & Security", color: "text-gray-600", bg: "bg-gray-100" },
     { icon: Settings, label: "Account Settings", color: "text-gray-600", bg: "bg-gray-100" },
   ];
+
+  if (!user) return null;
 
   return (
     <AnimatePresence>
@@ -70,14 +79,23 @@ export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
             <div className="p-6 bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
               <div className="flex flex-col items-center text-center">
                 <div className="relative group">
-                  <div className="w-20 h-20 rounded-full p-1 bg-white shadow-xl border border-gray-100 mb-3">
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-full h-full rounded-full object-cover"
-                    />
+                  <div className="w-20 h-20 rounded-full p-1 bg-white shadow-xl border border-gray-100 mb-3 overflow-hidden">
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-2xl font-bold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
-                  <button className="absolute bottom-3 right-0 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg border-2 border-white hover:bg-emerald-700 transition-all">
+                  <button 
+                    onClick={() => alert("Settings coming soon!")}
+                    className="absolute bottom-3 right-0 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg border-2 border-white hover:bg-emerald-700 transition-all"
+                  >
                     <Settings className="w-3 h-3" />
                   </button>
                 </div>
@@ -85,17 +103,17 @@ export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{user.email}</p>
                 <div className="mt-4 flex items-center gap-4">
                   <div className="text-center">
-                    <p className="text-xs font-black text-gray-900">12</p>
+                    <p className="text-xs font-black text-gray-900">0</p>
                     <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Orders</p>
                   </div>
                   <div className="w-[1px] h-4 bg-gray-200" />
                   <div className="text-center">
-                    <p className="text-xs font-black text-gray-900">৳4.5k</p>
+                    <p className="text-xs font-black text-gray-900">৳0</p>
                     <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Spent</p>
                   </div>
                   <div className="w-[1px] h-4 bg-gray-200" />
                   <div className="text-center">
-                    <p className="text-xs font-black text-gray-900">250</p>
+                    <p className="text-xs font-black text-gray-900">0</p>
                     <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Points</p>
                   </div>
                 </div>
@@ -107,6 +125,7 @@ export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
               {menuItems.map((item, idx) => (
                 <button
                   key={idx}
+                  onClick={() => alert(`${item.label} coming soon!`)}
                   className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
                 >
                   <div className="flex items-center gap-3">
@@ -127,13 +146,13 @@ export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
 
             {/* Footer */}
             <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-              <button className="w-full py-3 rounded-xl bg-white border border-red-100 text-red-600 font-black text-[10px] shadow-sm hover:bg-red-50 active:scale-95 transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-2 group">
+              <button 
+                onClick={handleLogout}
+                className="w-full py-3 rounded-xl bg-white border border-red-100 text-red-600 font-black text-[10px] shadow-sm hover:bg-red-50 active:scale-95 transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-2 group"
+              >
                 <LogOut className="w-3 h-3 transition-transform group-hover:-translate-x-1" />
                 Logout Account
               </button>
-              <p className="mt-3 text-[8px] font-bold text-gray-400 text-center uppercase tracking-widest">
-                Member Since {user.memberSince}
-              </p>
             </div>
           </motion.div>
         </>

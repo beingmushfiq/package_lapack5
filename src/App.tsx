@@ -16,26 +16,68 @@ import PurchasePopup from "./components/PurchasePopup";
 import Home from "./pages/Home";
 import AllProducts from "./pages/AllProducts";
 import ProductDetails from "./pages/ProductDetails";
-import { useState } from "react";
-import { PRODUCTS } from "./data/mockData";
+import TrackOrder from "./pages/TrackOrder";
+import HelpCenter from "./pages/HelpCenter";
+import FlashDeal from "./pages/FlashDeal";
+import SellerShop from "./pages/SellerShop";
+import Compare from "./pages/Compare";
+import Blogs from "./pages/Blogs";
+import ContactUs from "./pages/ContactUs";
+import AuthModal from "./components/AuthModal";
+import LoadingBar from 'react-top-loading-bar';
+import { useState, useEffect } from "react";
+import { useAuth } from "./lib/AuthContext";
+import { useSiteSettings } from "./lib/queries";
+import { Toaster, toast } from "react-hot-toast";
+import { OrganizationSchema, WebSiteSchema } from "./components/StructuredData";
 
 export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isCategoryOverlayOpen, setIsCategoryOverlayOpen] = useState(false);
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
   const [purchaseItems, setPurchaseItems] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<any[]>(() => {
+    const saved = localStorage.getItem('wishlist');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [progress, setProgress] = useState(0);
+  const { user } = useAuth();
+  const { data: settings } = useSiteSettings();
 
-  const handleAddToCart = (productId: string) => {
-    const product = PRODUCTS.find(p => p.id === productId);
+  // Wishlist Sync with Local Storage
+  useEffect(() => {
+    localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
+  }, [wishlistItems]);
+
+  // Tracking Scripts Injection
+  useEffect(() => {
+    if (settings?.tracking_scripts) {
+      // Create a temporary div to parse scripts
+      const div = document.createElement('div');
+      div.innerHTML = settings.tracking_scripts;
+      const scripts = div.querySelectorAll('script');
+      
+      scripts.forEach(oldScript => {
+        const newScript = document.createElement('script');
+        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        document.head.appendChild(newScript);
+      });
+    }
+  }, [settings?.tracking_scripts]);
+
+  const handleAddToCart = (product: any) => {
     if (product) {
       setCartItems(prev => {
-        const existing = prev.find(item => item.id === productId);
+        const existing = prev.find(item => item.id === product.id);
         if (existing) {
           return prev.map(item => 
-            item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
+            item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
           );
         }
         return [...prev, { ...product, quantity: 1, variation: "Default" }];
@@ -44,13 +86,13 @@ export default function App() {
     setIsCartOpen(true);
   };
 
-  const handleUpdateCartQuantity = (productId: string, delta: number) => {
+  const handleUpdateCartQuantity = (productId: string | number, delta: number) => {
     setCartItems(prev => prev.map(item => 
       item.id === productId ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
     ));
   };
 
-  const handleRemoveFromCart = (productId: string) => {
+  const handleRemoveFromCart = (productId: string | number) => {
     setCartItems(prev => prev.filter(item => item.id !== productId));
   };
 
@@ -60,36 +102,32 @@ export default function App() {
     setIsPurchaseOpen(true);
   };
 
-  const handleOrderNow = (productId: string) => {
-    const product = PRODUCTS.find(p => p.id === productId);
+  const handleOrderNow = (product: any) => {
     if (product) {
-      // Include the selected product plus 2 other random products for demonstration
-      const otherProducts = PRODUCTS
-        .filter(p => p.id !== productId)
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 2)
-        .map(p => ({
-          id: p.id,
-          name: p.name,
-          price: p.price,
-          image: p.image,
-          quantity: 1,
-          variation: "Default"
-        }));
-
       setPurchaseItems([
         {
           id: product.id,
           name: product.name,
           price: product.price,
-          image: product.image,
+          image: product.image || product.images?.[0] || '',
           quantity: 1,
           variation: "Default"
-        },
-        ...otherProducts
+        }
       ]);
       setIsPurchaseOpen(true);
     }
+  };
+
+  const handleToggleWishlist = (product: any) => {
+    setWishlistItems(prev => {
+      const exists = prev.find(item => item.id === product.id);
+      if (exists) {
+        toast.success(`Removed from wishlist!`);
+        return prev.filter(item => item.id !== product.id);
+      }
+      toast.success(`Added to wishlist!`);
+      return [...prev, product];
+    });
   };
 
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -98,28 +136,68 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-white font-sans selection:bg-emerald-100 selection:text-emerald-900">
+        {/* Site-wide Structured Data */}
+        <OrganizationSchema
+          name={settings?.site_name || "AmarShop"}
+          url={window.location.origin}
+          logo={settings?.site_logo}
+          email={settings?.site_email}
+          phone={settings?.site_phone}
+          address={settings?.site_address}
+        />
+        <WebSiteSchema
+          name={settings?.site_name || "AmarShop"}
+          url={window.location.origin}
+        />
+        <LoadingBar
+          color='#10b981'
+          progress={progress}
+          onLoaderFinished={() => setProgress(0)}
+          height={3}
+          shadow={true}
+        />
         <Navbar 
           onCartClick={() => setIsCartOpen(true)} 
           onWishlistClick={() => setIsWishlistOpen(true)}
-          onProfileClick={() => setIsProfileOpen(true)}
+          onProfileClick={() => {
+            if (user) {
+              setIsProfileOpen(true);
+            } else {
+              setAuthMode('login');
+              setIsAuthModalOpen(true);
+            }
+          }}
           cartCount={cartCount}
           cartTotal={cartTotal}
         />
         <SubNavbar onCategoriesClick={() => setIsCategoryOverlayOpen(true)} />
         
         <Routes>
-          <Route path="/" element={<Home onCategorySeeMore={() => setIsCategoryOverlayOpen(true)} onAddToCart={handleAddToCart} />} />
-          <Route path="/allproducts" element={<AllProducts onAddToCart={handleAddToCart} />} />
-          <Route path="/productdetails/:productName" element={<ProductDetails onAddToCart={handleAddToCart} onOrderNow={handleOrderNow} />} />
-          {/* Fallback for the old /products link if it exists */}
-          <Route path="/products" element={<AllProducts onAddToCart={handleAddToCart} />} />
+          <Route path="/" element={<Home onCategorySeeMore={() => setIsCategoryOverlayOpen(true)} onAddToCart={handleAddToCart} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} />} />
+          <Route path="/allproducts" element={<AllProducts onAddToCart={handleAddToCart} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} />} />
+          <Route path="/productdetails/:productName" element={<ProductDetails onAddToCart={handleAddToCart} onOrderNow={handleOrderNow} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} />} />
+          <Route path="/products" element={<AllProducts onAddToCart={handleAddToCart} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} />} />
+          <Route path="/track-order" element={<TrackOrder />} />
+          <Route path="/help-center" element={<HelpCenter />} />
+          <Route path="/flash-deal" element={<FlashDeal onAddToCart={handleAddToCart} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} />} />
+          <Route path="/seller-shop" element={<SellerShop />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/blogs" element={<Blogs />} />
+          <Route path="/contact" element={<ContactUs />} />
         </Routes>
 
         <Footer />
         <BottomNav 
           onCartClick={() => setIsCartOpen(true)} 
           onWishlistClick={() => setIsWishlistOpen(true)}
-          onProfileClick={() => setIsProfileOpen(true)}
+          onProfileClick={() => {
+            if (user) {
+              setIsProfileOpen(true);
+            } else {
+              setAuthMode('login');
+              setIsAuthModalOpen(true);
+            }
+          }}
           cartCount={cartCount}
         />
         <CartDrawer 
@@ -130,7 +208,13 @@ export default function App() {
           onRemove={handleRemoveFromCart}
           onCheckout={handleCheckout}
         />
-        <WishlistDrawer isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
+        <WishlistDrawer 
+          isOpen={isWishlistOpen} 
+          onClose={() => setIsWishlistOpen(false)} 
+          items={wishlistItems}
+          onAddToCart={handleAddToCart}
+          onRemove={(id) => setWishlistItems(prev => prev.filter(item => item.id !== id))}
+        />
         <ProfileDrawer isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
         <CategoryOverlay isOpen={isCategoryOverlayOpen} onClose={() => setIsCategoryOverlayOpen(false)} />
         <PurchasePopup 
@@ -138,6 +222,12 @@ export default function App() {
           onClose={() => setIsPurchaseOpen(false)} 
           cartItems={purchaseItems} 
         />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          defaultMode={authMode}
+        />
+        <Toaster position="top-right" />
       </div>
     </BrowserRouter>
   );

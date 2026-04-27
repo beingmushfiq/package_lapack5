@@ -96,7 +96,7 @@ export default function CartDrawer({
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{item.category}</p>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{typeof item.category === 'object' ? item.category?.name : item.category}</p>
                       </div>
                       
                       <div className="flex items-center justify-between mt-1">

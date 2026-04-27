@@ -1,17 +1,17 @@
 import { X, Heart, ShoppingCart, Trash2, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { PRODUCTS } from "../data/mockData";
 import { cn } from "../lib/utils";
 
 interface WishlistDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddToCart?: (productId: string) => void;
+  items: any[];
+  onAddToCart?: (product: any) => void;
+  onRemove?: (productId: string | number) => void;
 }
 
-export default function WishlistDrawer({ isOpen, onClose, onAddToCart }: WishlistDrawerProps) {
-  // For demo purposes, we'll just show the first 3 products as "wishlisted"
-  const wishlistItems = PRODUCTS.slice(0, 3);
+export default function WishlistDrawer({ isOpen, onClose, items, onAddToCart, onRemove }: WishlistDrawerProps) {
+  const wishlistItems = items;
 
   return (
     <AnimatePresence>
@@ -74,7 +74,7 @@ export default function WishlistDrawer({ isOpen, onClose, onAddToCart }: Wishlis
                         <h3 className="text-[11px] font-bold text-gray-900 line-clamp-1 leading-tight group-hover:text-pink-600 transition-colors">
                           {item.name}
                         </h3>
-                        <p className="text-[9px] font-medium text-gray-400 uppercase tracking-wider">{item.category}</p>
+                        <p className="text-[9px] font-medium text-gray-400 uppercase tracking-wider">{typeof item.category === 'object' ? item.category?.name : item.category}</p>
                       </div>
                       
                       <div className="flex items-center justify-between mt-1">
@@ -88,6 +88,7 @@ export default function WishlistDrawer({ isOpen, onClose, onAddToCart }: Wishlis
                             <ShoppingCart className="w-3 h-3" />
                           </button>
                           <button 
+                            onClick={() => onRemove?.(item.id)}
                             className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-all active:scale-95"
                             title="Remove"
                           >
@@ -119,7 +120,10 @@ export default function WishlistDrawer({ isOpen, onClose, onAddToCart }: Wishlis
 
             {/* Footer */}
             <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-              <button className="w-full py-3 rounded-xl bg-emerald-600 text-white font-black text-[10px] shadow-lg shadow-emerald-500/10 active:scale-95 transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-2 group">
+              <button 
+                onClick={() => alert("All items added to cart!")}
+                className="w-full py-3 rounded-xl bg-emerald-600 text-white font-black text-[10px] shadow-lg shadow-emerald-500/10 active:scale-95 transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-2 group"
+              >
                 Add to cart all Products
                 <ShoppingCart className="w-3 h-3 transition-transform group-hover:scale-110" />
               </button>

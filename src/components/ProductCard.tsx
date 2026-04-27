@@ -1,20 +1,21 @@
 import { Star, ShoppingCart, Heart, Share2, CheckCircle2 } from "lucide-react";
 import { Product } from "../types";
-import { formatPrice, cn } from "../lib/utils";
+import { formatPrice, cn, getImageUrl } from "../lib/utils";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
-  product: Product;
-  onAddToCart?: (productId: string) => void;
-  key?: string;
+  product: Product | any;
+  onAddToCart?: (product: any) => void;
+  onToggleWishlist?: (product: any) => void;
+  isWishlisted?: boolean;
 }
 
-export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export default function ProductCard({ product, onAddToCart, onToggleWishlist, isWishlisted }: ProductCardProps) {
   const navigate = useNavigate();
 
   const handleProductClick = () => {
-    const slug = product.name.toLowerCase().replace(/ /g, '-');
+    const slug = product.slug || product.name.toLowerCase().replace(/ /g, '-');
     navigate(`/productdetails/${slug}`);
   };
 
@@ -27,7 +28,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         <img
-          src={product.image}
+          src={getImageUrl(product.image)}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           referrerPolicy="no-referrer"
@@ -45,13 +46,18 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         {/* Top Right Actions */}
         <div className="absolute top-4 right-4 flex flex-col gap-2">
           <button 
-            onClick={(e) => { e.stopPropagation(); }}
-            className="p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-600 hover:bg-white hover:text-red-500 shadow-md transition-all"
+            onClick={(e) => { e.stopPropagation(); onToggleWishlist?.(product); }}
+            className={cn(
+              "p-2 rounded-full backdrop-blur-sm shadow-md transition-all",
+              isWishlisted 
+                ? "bg-pink-500 text-white hover:bg-pink-600" 
+                : "bg-white/90 text-gray-600 hover:bg-white hover:text-pink-500"
+            )}
           >
-            <Heart className="w-4 h-4" />
+            <Heart className={cn("w-4 h-4", isWishlisted && "fill-current")} />
           </button>
           <button 
-            onClick={(e) => { e.stopPropagation(); }}
+            onClick={(e) => { e.stopPropagation(); alert("Sharing coming soon!"); }}
             className="p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-600 hover:bg-white hover:text-emerald-600 shadow-md transition-all"
           >
             <Share2 className="w-4 h-4" />
@@ -91,7 +97,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              onAddToCart?.(product.id);
+              onAddToCart?.(product);
             }}
             className="flex items-center justify-center py-1.5 sm:py-2.5 rounded-lg bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all active:scale-95"
           >
@@ -108,9 +114,8 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           </button>
         </div>
 
-        {/* Inquire Button */}
         <button 
-          onClick={(e) => { e.stopPropagation(); }}
+          onClick={(e) => { e.stopPropagation(); navigate('/contact'); }}
           className="w-full py-1 sm:py-2 rounded-lg border-2 border-dashed border-gray-200 text-gray-500 font-bold text-[9px] sm:text-sm hover:border-emerald-600 hover:text-emerald-600 transition-all active:scale-95"
         >
           Inquire

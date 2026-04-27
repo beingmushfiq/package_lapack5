@@ -2,6 +2,9 @@ import { X, Trash2, Plus, Minus, CreditCard, Truck, CheckCircle2, Wallet, Smartp
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 import { formatPrice } from "../lib/utils";
+import { useAuth } from "../lib/AuthContext";
+import { usePaymentMethods, useShippingZones } from "../lib/queries";
+import api from "../lib/api";
 
 interface CartItem {
   id: string;
@@ -18,33 +21,64 @@ interface PurchasePopupProps {
   cartItems: CartItem[];
 }
 
-const PAYMENT_METHODS = [
-  { id: 'cod', name: 'Cash on Delivery', icon: Wallet },
-  { id: 'bkash', name: 'bKash', icon: Smartphone, color: 'bg-pink-500' },
-  { id: 'nagad', name: 'Nagad', icon: Smartphone, color: 'bg-orange-500' },
-  { id: 'rocket', name: 'Rocket', icon: Smartphone, color: 'bg-purple-600' },
-  { id: 'ssl', name: 'SSL Commerz', icon: Globe, color: 'bg-blue-600' },
-];
+const PAYMENT_METHOD_ICONS: Record<string, any> = {
+  'cod': Wallet,
+  'bkash': Smartphone,
+  'nagad': Smartphone,
+  'rocket': Smartphone,
+  'ssl': Globe,
+};
 
-const SHIPPING_CITIES = [
-  { id: 'dhaka', name: 'Dhaka City', price: 60 },
-  { id: 'outside', name: 'Outside Dhaka', price: 120 },
-];
+const PAYMENT_METHOD_COLORS: Record<string, string> = {
+  'bkash': 'bg-pink-500',
+  'nagad': 'bg-orange-500',
+  'rocket': 'bg-purple-600',
+  'ssl': 'bg-blue-600',
+};
 
 export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems }: PurchasePopupProps) {
+  const { user } = useAuth();
+  const { data: paymentMethods = [] } = usePaymentMethods();
+  const { data: shippingZones = [] } = useShippingZones();
+
   const [items, setItems] = useState(initialItems);
-  const [shippingCity, setShippingCity] = useState(SHIPPING_CITIES[0]);
-  const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0].id);
+  const [shippingZoneId, setShippingZoneId] = useState<number | string | null>(null);
+  const [paymentMethodId, setPaymentMethodId] = useState<number | string | null>(null);
   const [payOnlyShipping, setPayOnlyShipping] = useState(false);
-  const [formData, setFormData] = useState({ name: '', number: '', address: '' });
+  const [formData, setFormData] = useState({ 
+    firstName: '', 
+    lastName: '', 
+    number: '', 
+    address: '',
+    email: '',
+    city: '',
+    state: '',
+    zip: '',
+    country: 'BD'
+  });
   const [isItemsCollapsed, setIsItemsCollapsed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   // Update internal items when the popup opens or initialItems changes
   useEffect(() => {
     if (isOpen) {
       setItems(initialItems);
+      setError('');
     }
   }, [isOpen, initialItems]);
+
+  useEffect(() => {
+    if (shippingZones.length > 0 && !shippingZoneId) {
+      setShippingZoneId(shippingZones[0].id);
+    }
+    if (paymentMethods.length > 0 && !paymentMethodId) {
+      setPaymentMethodId(paymentMethods[0].id);
+    }
+  }, [shippingZones, paymentMethods, shippingZoneId, paymentMethodId]);
+
+  const selectedShippingZone = shippingZones.find((z: any) => z.id === shippingZoneId);
+  const shippingCost = selectedShippingZone?.cost || 0;
 
   const updateQuantity = (id: string, delta: number) => {
     setItems(prev => prev.map(item => 
@@ -63,8 +97,83 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
   };
 
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const total = subtotal + shippingCity.price;
-  const finalAmount = payOnlyShipping ? shippingCity.price : total;
+  const total = subtotal + shippingCost;
+  const finalAmount = payOnlyShipping ? shippingCost : total;
+
+  const handleConfirmPurchase = async () => {
+    if (!user) {
+      setError('Please login to place an order.');
+      return;
+    }
+
+    if (!formData.firstName || !formData.lastName || !formData.number || !formData.address || !shippingZoneId || !paymentMethodId) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const orderData = {
+        items: items.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          unit_price: item.price,
+          // If the backend expects product_variation_id, we need to map it here
+          // For now, we'll send null or a default if available
+          product_variation_id: null 
+        })),
+        shipping_first_name: formData.firstName,
+        shipping_last_name: formData.lastName,
+        shipping_address: formData.address,
+        shipping_city: formData.city || selectedShippingZone?.name || '',
+        shipping_phone: formData.number,
+        shipping_email: formData.email || user.email,
+        shipping_state: formData.state,
+        shipping_zip: formData.zip,
+        shipping_country: formData.country,
+        payment_method_id: paymentMethodId,
+        shipping_fee: shippingCost,
+        pay_only_shipping: payOnlyShipping
+      };
+
+      const { data } = await api.post('/orders', orderData);
+      
+      toast.success('Order placed successfully!', {
+        duration: 5000,
+        icon: '🎉',
+        style: {
+          borderRadius: '16px',
+          background: '#10b981',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '12px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        },
+      });
+
+      // Clear cart or navigate to track order
+      onClose();
+      // Optional: window.location.href = `/track-order?order_number=${data.order_number}`;
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Failed to place order. Please try again.';
+      toast.error(message, {
+        style: {
+          borderRadius: '16px',
+          background: '#ef4444',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '12px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -196,8 +305,8 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
                   <span>{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-[10px] font-bold text-gray-500">
-                  <span>Shipping ({shippingCity.name})</span>
-                  <span>{formatPrice(shippingCity.price)}</span>
+                  <span>Shipping ({selectedShippingZone?.name || 'Loading...'})</span>
+                  <span>{formatPrice(shippingCost)}</span>
                 </div>
                 <div className="h-px bg-emerald-100/50 my-1" />
                 <div className="flex justify-between items-center">
@@ -207,10 +316,16 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
                 {payOnlyShipping && (
                   <div className="flex justify-between items-center pt-1.5 border-t border-dashed border-emerald-200">
                     <span className="text-[9px] font-black text-blue-600 uppercase">Pay Now (Shipping)</span>
-                    <span className="text-xs font-black text-blue-600">{formatPrice(shippingCity.price)}</span>
+                    <span className="text-xs font-black text-blue-600">{formatPrice(shippingCost)}</span>
                   </div>
                 )}
               </div>
+
+              {error && (
+                <div className="p-2 bg-red-50 border border-red-100 text-red-600 text-[10px] font-bold rounded-lg text-center">
+                  {error}
+                </div>
+              )}
 
               {/* Customer Info */}
               <div className="space-y-2">
@@ -218,30 +333,49 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
                 <div className="grid grid-cols-2 gap-2">
                   <input 
                     type="text" 
-                    placeholder="Full Name" 
+                    placeholder="First Name" 
                     className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[10px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/50 transition-all"
-                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    value={formData.firstName}
+                    onChange={e => setFormData({...formData, firstName: e.target.value})}
                   />
+                  <input 
+                    type="text" 
+                    placeholder="Last Name" 
+                    className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[10px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/50 transition-all"
+                    value={formData.lastName}
+                    onChange={e => setFormData({...formData, lastName: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                   <input 
                     type="tel" 
                     placeholder="Phone Number" 
                     className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[10px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/50 transition-all"
+                    value={formData.number}
                     onChange={e => setFormData({...formData, number: e.target.value})}
+                  />
+                  <input 
+                    type="email" 
+                    placeholder="Email (Optional)" 
+                    className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[10px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/50 transition-all"
+                    value={formData.email}
+                    onChange={e => setFormData({...formData, email: e.target.value})}
                   />
                 </div>
                 <input 
                   placeholder="Full Delivery Address" 
                   className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[10px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/50 transition-all"
+                  value={formData.address}
                   onChange={e => setFormData({...formData, address: e.target.value})}
                 />
                 <div className="grid grid-cols-2 gap-2">
-                  {SHIPPING_CITIES.map(city => (
+                  {shippingZones.map((zone: any) => (
                     <button
-                      key={city.id}
-                      onClick={() => setShippingCity(city)}
-                      className={`py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tight border-2 transition-all ${shippingCity.id === city.id ? 'border-emerald-600 bg-emerald-50 text-emerald-600' : 'border-gray-50 bg-gray-50 text-gray-400'}`}
+                      key={zone.id}
+                      onClick={() => setShippingZoneId(zone.id)}
+                      className={`py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tight border-2 transition-all ${shippingZoneId === zone.id ? 'border-emerald-600 bg-emerald-50 text-emerald-600' : 'border-gray-50 bg-gray-50 text-gray-400'}`}
                     >
-                      {city.name} (+{city.price})
+                      {zone.name} (+{zone.cost})
                     </button>
                   ))}
                 </div>
@@ -251,18 +385,22 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
               <div className="space-y-2">
                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest px-1">Payment</p>
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
-                  {PAYMENT_METHODS.map(method => (
-                    <button
-                      key={method.id}
-                      onClick={() => setPaymentMethod(method.id)}
-                      className={`flex flex-col items-center gap-1 p-1.5 rounded-xl border-2 transition-all ${paymentMethod === method.id ? 'border-emerald-600 bg-emerald-50' : 'border-gray-50 bg-gray-50'}`}
-                    >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${method.color || 'bg-gray-200'} text-white`}>
-                        <method.icon className="w-3 h-3" />
-                      </div>
-                      <span className={`text-[7px] font-black uppercase tracking-tighter text-center leading-none ${paymentMethod === method.id ? 'text-emerald-600' : 'text-gray-500'}`}>{method.name}</span>
-                    </button>
-                  ))}
+                  {paymentMethods.map((method: any) => {
+                    const Icon = PAYMENT_METHOD_ICONS[method.code] || Wallet;
+                    const color = PAYMENT_METHOD_COLORS[method.code] || 'bg-gray-200';
+                    return (
+                      <button
+                        key={method.id}
+                        onClick={() => setPaymentMethodId(method.id)}
+                        className={`flex flex-col items-center gap-1 p-1.5 rounded-xl border-2 transition-all ${paymentMethodId === method.id ? 'border-emerald-600 bg-emerald-50' : 'border-gray-50 bg-gray-50'}`}
+                      >
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${color} text-white`}>
+                          <Icon className="w-3 h-3" />
+                        </div>
+                        <span className={`text-[7px] font-black uppercase tracking-tighter text-center leading-none ${paymentMethodId === method.id ? 'text-emerald-600' : 'text-gray-500'}`}>{method.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
                 
                 <label className="flex items-center gap-2 p-2 bg-blue-50 rounded-xl cursor-pointer group border border-blue-100">
@@ -279,7 +417,7 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
                   </div>
                   <div className="flex-1">
                     <p className="text-[9px] font-black text-blue-900 uppercase leading-none">Pay Shipping Only</p>
-                    <p className="text-[7px] font-bold text-blue-600 uppercase tracking-widest mt-0.5">Pay ৳{shippingCity.price} now, rest on delivery</p>
+                    <p className="text-[7px] font-bold text-blue-600 uppercase tracking-widest mt-0.5">Pay ৳{shippingCost} now, rest on delivery</p>
                   </div>
                 </label>
               </div>
@@ -287,8 +425,12 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
 
             {/* Footer */}
             <div className="p-3 bg-white border-t border-gray-100">
-              <button className="w-full py-3 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] flex items-center justify-center gap-2">
-                <span>Confirm Purchase</span>
+              <button 
+                onClick={handleConfirmPurchase}
+                disabled={isSubmitting || items.length === 0}
+                className="w-full py-3 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <span>{isSubmitting ? 'Processing...' : 'Confirm Purchase'}</span>
                 <span className="w-1 h-1 rounded-full bg-white/30" />
                 <span>{formatPrice(finalAmount)}</span>
               </button>

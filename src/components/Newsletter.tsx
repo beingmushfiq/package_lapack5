@@ -1,7 +1,29 @@
-import { Mail, ArrowRight, BellRing, Phone } from "lucide-react";
+import { Mail, ArrowRight, BellRing, Phone, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
+import { useState } from "react";
+import api from "../lib/api";
 
 export default function Newsletter() {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setStatus(null);
+
+    try {
+      await api.post('/subscribe', { email });
+      setStatus({ type: 'success', message: 'Thank you for subscribing!' });
+      setEmail('');
+    } catch (err: any) {
+      setStatus({ type: 'error', message: err.response?.data?.message || 'Failed to subscribe.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section className="py-12 sm:py-24 bg-gray-900 relative overflow-hidden">
       {/* Abstract Background Elements */}
@@ -36,31 +58,33 @@ export default function Newsletter() {
               Be the first to know about new collections, seasonal sales, and exclusive events in Bangladesh.
             </p>
 
-            <form className="max-w-lg mx-auto space-y-4" onSubmit={(e) => e.preventDefault()}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form className="max-w-lg mx-auto space-y-4" onSubmit={handleSubmit}>
+              {status && (
+                <div className={`p-4 rounded-xl text-sm font-bold ${status.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                  {status.message}
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-4">
                 <div className="relative group">
                   <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors">
                     <Mail className="w-5 h-5" />
                   </div>
                   <input
                     type="email"
+                    required
                     placeholder="Enter your email"
                     className="w-full bg-white/10 border border-white/10 rounded-2xl py-4 sm:py-5 pl-14 pr-4 text-white font-bold placeholder:text-gray-500 focus:ring-4 focus:ring-emerald-500/20 focus:bg-white/20 focus:border-emerald-500/50 outline-none transition-all text-sm sm:text-base"
-                  />
-                </div>
-                <div className="relative group">
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors">
-                    <Phone className="w-5 h-5" />
-                  </div>
-                  <input
-                    type="tel"
-                    placeholder="Phone Number"
-                    className="w-full bg-white/10 border border-white/10 rounded-2xl py-4 sm:py-5 pl-14 pr-4 text-white font-bold placeholder:text-gray-500 focus:ring-4 focus:ring-emerald-500/20 focus:bg-white/20 focus:border-emerald-500/50 outline-none transition-all text-sm sm:text-base"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
                   />
                 </div>
               </div>
-              <button className="w-full bg-emerald-600 text-white py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base hover:bg-emerald-500 transition-all hover:shadow-xl hover:shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest">
-                Join Now <ArrowRight className="w-5 h-5" />
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full bg-emerald-600 text-white py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base hover:bg-emerald-500 transition-all hover:shadow-xl hover:shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest disabled:opacity-50"
+              >
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Join Now <ArrowRight className="w-5 h-5" /></>}
               </button>
             </form>
 

@@ -12,3 +12,8 @@ export function formatPrice(price: number) {
     minimumFractionDigits: 0,
   }).format(price).replace("BDT", "৳");
 }
+export function getImageUrl(path: string) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return `http://localhost:8000${path}`;
+}

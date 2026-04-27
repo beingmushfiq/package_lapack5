@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { PRODUCTS } from "../data/mockData";
+import { useProducts } from "../lib/queries";
 import ProductCard from "./ProductCard";
 import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -8,12 +8,19 @@ import { useNavigate } from "react-router-dom";
 interface ProductGridProps {
   title: string;
   highlightWord: string;
-  onAddToCart?: (productId: string) => void;
+  collection?: string;
+  onAddToCart?: (product: any) => void;
+  onToggleWishlist?: (product: any) => void;
+  wishlistItems?: any[];
 }
 
-export default function ProductGrid({ title, highlightWord, onAddToCart }: ProductGridProps) {
+export default function ProductGrid({ title, highlightWord, collection, onAddToCart, onToggleWishlist, wishlistItems = [] }: ProductGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { data: productsResult, isLoading } = useProducts(undefined, undefined, collection);
+  
+  // The API returns paginated data inside productsResult.data usually
+  const products = productsResult?.data || [];
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -23,9 +30,24 @@ export default function ProductGrid({ title, highlightWord, onAddToCart }: Produ
     }
   };
 
+  if (isLoading) {
+    return (
+      <section className="py-4 sm:py-6 bg-gray-50/50 overflow-hidden">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+           <div className="h-8 w-48 bg-gray-200 animate-pulse rounded mb-4"></div>
+           <div className="flex gap-4 overflow-x-auto no-scrollbar">
+             {[1, 2, 3, 4, 5].map(i => (
+               <div key={i} className="min-w-[calc(50%-0.5rem)] sm:min-w-[calc(33.33%-1rem)] lg:min-w-[calc(20%-1rem)] h-64 bg-gray-200 animate-pulse rounded-2xl"></div>
+             ))}
+           </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-4 sm:py-6 bg-gray-50/50 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tighter">
             {title} <span className="text-emerald-600">{highlightWord}</span>
@@ -67,7 +89,7 @@ export default function ProductGrid({ title, highlightWord, onAddToCart }: Produ
           ref={scrollRef}
           className="flex gap-4 sm:gap-6 lg:gap-5 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-4"
         >
-          {PRODUCTS.map((product, idx) => (
+          {products.map((product: any, idx: number) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, x: 20 }}
@@ -76,7 +98,12 @@ export default function ProductGrid({ title, highlightWord, onAddToCart }: Produ
               viewport={{ once: true }}
               className="min-w-[calc(50%-0.5rem)] sm:min-w-[calc(33.33%-1rem)] lg:min-w-[calc(20%-1rem)] snap-start"
             >
-              <ProductCard product={product} onAddToCart={onAddToCart} />
+              <ProductCard 
+                product={product} 
+                onAddToCart={onAddToCart} 
+                onToggleWishlist={onToggleWishlist}
+                isWishlisted={wishlistItems.some((item: any) => item.id === product.id)}
+              />
             </motion.div>
           ))}
         </div>

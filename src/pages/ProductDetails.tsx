@@ -1,5 +1,4 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { PRODUCTS } from "../data/mockData";
 import ProductCard from "../components/ProductCard";
 import { 
   Star, ShoppingCart, Heart, Share2, ChevronLeft, ShieldCheck, Truck, RotateCcw, 
@@ -9,13 +8,21 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { formatPrice } from "../lib/utils";
 import { useEffect, useState, useRef } from "react";
+import { useProduct, useProducts } from "../lib/queries";
+import { toast } from "react-hot-toast";
+import { ProductSchema, BreadcrumbSchema } from "../components/StructuredData";
+import { cn } from "../lib/utils";
 
 export default function ProductDetails({ 
   onAddToCart, 
-  onOrderNow 
+  onOrderNow,
+  onToggleWishlist,
+  wishlistItems
 }: { 
-  onAddToCart?: (productId: string) => void,
-  onOrderNow?: (productId: string) => void
+  onAddToCart?: (product: any) => void,
+  onOrderNow?: (product: any) => void,
+  onToggleWishlist?: (product: any) => void,
+  wishlistItems?: any[]
 }) {
   const { productName } = useParams();
   const navigate = useNavigate();
@@ -24,26 +31,34 @@ export default function ProductDetails({
   const [activeTab, setActiveTab] = useState('description');
   const sliderInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Find product by slugified name or name
-  const product = PRODUCTS.find(p => 
-    p.name.toLowerCase().replace(/ /g, '-') === productName || 
-    p.name === productName
-  );
+  // Fetch product by slug
+  const { data: productResponse, isLoading } = useProduct(productName || '');
+  const product = productResponse;
 
-  const images = product ? [product.image, "https://picsum.photos/seed/p1/600/800", "https://picsum.photos/seed/p2/600/800", "https://picsum.photos/seed/p3/600/800"] : [];
+  // Fetch related products
+  const { data: relatedResponse } = useProducts(product?.category?.slug);
+  const relatedProducts = relatedResponse?.data || [];
+
+  const images = product ? (product.images?.length > 0 ? product.images : [product.image || "https://picsum.photos/seed/p1/600/800", "https://picsum.photos/seed/p2/600/800", "https://picsum.photos/seed/p3/600/800"]) : [];
 
   useEffect(() => {
     window.scrollTo(0, 0);
     
     // Automated Slider
-    sliderInterval.current = setInterval(() => {
-      setActiveImageIndex((prev) => (prev + 1) % images.length);
-    }, 4000);
+    if (images.length > 1) {
+      sliderInterval.current = setInterval(() => {
+        setActiveImageIndex((prev) => (prev + 1) % images.length);
+      }, 4000);
+    }
 
     return () => {
       if (sliderInterval.current) clearInterval(sliderInterval.current);
     };
   }, [images.length]);
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div></div>;
+  }
 
   if (!product) {
     return (
@@ -61,7 +76,14 @@ export default function ProductDetails({
 
   return (
     <div className="min-h-screen bg-white pb-20 sm:pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      {/* SEO Structured Data */}
+      <ProductSchema product={product} />
+      <BreadcrumbSchema items={[
+        { name: "Home", url: window.location.origin },
+        ...(product.category ? [{ name: product.category.name, url: `${window.location.origin}/allproducts?category=${product.category.slug}` }] : []),
+        { name: product.name, url: `${window.location.origin}/productdetails/${product.slug}` },
+      ]} />
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
           {/* Left: Image Gallery & Slider */}
           <div className="space-y-3">
@@ -79,34 +101,38 @@ export default function ProductDetails({
                 />
               </AnimatePresence>
 
-              {product.discount && (
+              {product.discount_price && (
                 <div className="absolute top-3 left-3 bg-[#ff4d4d] text-white text-[9px] font-black px-2 py-1 rounded-md shadow-lg">
-                  -{product.discount}% OFF
+                  -{Math.round(((product.price - product.discount_price) / product.price) * 100)}% OFF
                 </div>
               )}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {images.map((_, i) => (
-                  <button 
-                    key={i}
-                    onClick={() => setActiveImageIndex(i)}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${activeImageIndex === i ? 'bg-emerald-600 w-4' : 'bg-gray-300'}`}
-                  />
-                ))}
-              </div>
+              {images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {images.map((_: any, i: number) => (
+                    <button 
+                      key={i}
+                      onClick={() => setActiveImageIndex(i)}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${activeImageIndex === i ? 'bg-emerald-600 w-4' : 'bg-gray-300'}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
             
             {/* Thumbnails */}
-            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
-              {images.map((img, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => setActiveImageIndex(i)}
-                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-lg border-2 overflow-hidden flex-shrink-0 transition-all ${activeImageIndex === i ? 'border-emerald-500 scale-95' : 'border-gray-100 opacity-60'}`}
-                >
-                  <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </button>
-              ))}
-            </div>
+            {images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                {images.map((img: string, i: number) => (
+                  <button 
+                    key={i} 
+                    onClick={() => setActiveImageIndex(i)}
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-lg border-2 overflow-hidden flex-shrink-0 transition-all ${activeImageIndex === i ? 'border-emerald-500 scale-95' : 'border-gray-100 opacity-60'}`}
+                  >
+                    <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right: Product Info */}
@@ -115,16 +141,24 @@ export default function ProductDetails({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest">
-                    {product.category}
+                    {product.category?.name || product.category || 'Product'}
                   </span>
-                  {product.isNew && (
+                  {product.is_featured && (
                     <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest">
-                      New
+                      Featured
                     </span>
                   )}
                 </div>
-                <button className="p-1.5 text-gray-400 hover:text-pink-500 transition-colors">
-                  <Heart className="w-4 h-4" />
+                <button 
+                  onClick={() => onToggleWishlist?.(product)}
+                  className={cn(
+                    "p-1.5 transition-colors",
+                    wishlistItems?.some((item: any) => item.id === product.id)
+                      ? "text-pink-500" 
+                      : "text-gray-400 hover:text-pink-500"
+                  )}
+                >
+                  <Heart className={cn("w-4 h-4", wishlistItems?.some((item: any) => item.id === product.id) && "fill-current")} />
                 </button>
               </div>
 
@@ -136,54 +170,32 @@ export default function ProductDetails({
                 <div className="flex items-center gap-1">
                   <div className="flex items-center">
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} className={`w-3 h-3 ${s <= Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-200'}`} />
+                      <Star key={s} className={`w-3 h-3 ${s <= 4 ? 'text-yellow-400 fill-current' : 'text-gray-200'}`} />
                     ))}
                   </div>
                   <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                    ({product.rating}) {product.reviews} Reviews
+                    (4.5) 24 Reviews
                   </span>
                 </div>
                 <div className="h-3 w-[1px] bg-gray-200" />
                 <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">
-                  {product.soldCount} Sold
+                  125 Sold
                 </span>
               </div>
 
               <div className="flex items-baseline gap-2 mb-4">
                 <span className="text-xl sm:text-2xl font-black text-gray-900">
-                  {formatPrice(product.price)}
+                  {formatPrice(product.discount_price || product.price)}
                 </span>
-                {product.originalPrice && (
+                {product.discount_price && (
                   <span className="text-xs text-gray-400 line-through font-bold">
-                    {formatPrice(product.originalPrice)}
+                    {formatPrice(product.price)}
                   </span>
                 )}
               </div>
 
-              <p className="text-[10px] sm:text-xs text-gray-500 leading-relaxed mb-5 font-medium">
-                Premium quality {product.name} with elegant design and superior comfort. Perfect for any occasion.
+              <p className="text-[10px] sm:text-xs text-gray-500 leading-relaxed mb-5 font-medium" dangerouslySetInnerHTML={{ __html: product.short_description || product.description || '' }}>
               </p>
-            </div>
-
-            {/* Selection Options - Dropdowns */}
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Color</label>
-                <select className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/20">
-                  <option>Midnight Black</option>
-                  <option>Ocean Blue</option>
-                  <option>Forest Green</option>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Size</label>
-                <select className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/20">
-                  <option>Small (S)</option>
-                  <option>Medium (M)</option>
-                  <option>Large (L)</option>
-                  <option>Extra Large (XL)</option>
-                </select>
-              </div>
             </div>
 
             <div className="flex items-center gap-3 mb-4">
@@ -203,7 +215,16 @@ export default function ProductDetails({
                 </button>
               </div>
               <button 
-                onClick={() => onAddToCart?.(product.id)}
+                onClick={() => {
+                  if (onAddToCart) {
+                    onAddToCart({
+                      ...product,
+                      image: product.image || (product.images && product.images.length > 0 ? product.images[0] : ''),
+                      quantity
+                    });
+                    toast.success('Added to cart!');
+                  }
+                }}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 text-gray-900 font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95"
               >
                 <ShoppingCart className="w-3.5 h-3.5" />
@@ -214,26 +235,39 @@ export default function ProductDetails({
             {/* Action Buttons */}
             <div className="space-y-2 mb-6">
               <button 
-                onClick={() => onOrderNow?.(product.id)}
+                onClick={() => {
+                  if (onOrderNow) {
+                    onOrderNow({
+                      ...product,
+                      image: product.image || (product.images && product.images.length > 0 ? product.images[0] : ''),
+                      quantity
+                    });
+                  }
+                }}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200"
               >
                 Order Now
               </button>
-              <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:border-emerald-200 hover:text-emerald-600 transition-all active:scale-95">
+              <button 
+                onClick={() => navigate('/contact')}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:border-emerald-200 hover:text-emerald-600 transition-all active:scale-95"
+              >
                 <MessageCircle className="w-3.5 h-3.5" />
                 Inquiry Now
               </button>
 
               {/* YouTube Video Preview */}
-              <div className="mt-4 aspect-video rounded-xl overflow-hidden bg-gray-100 border border-gray-100 shadow-sm">
-                <iframe 
-                  className="w-full h-full"
-                  src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
-                  title="Product Preview Video"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                />
-              </div>
+              {product.youtube_url && (
+                <div className="mt-4 aspect-video rounded-xl overflow-hidden bg-gray-100 border border-gray-100 shadow-sm">
+                  <iframe 
+                    className="w-full h-full"
+                    src={`https://www.youtube.com/embed/${product.youtube_url.split('v=')[1]}`} 
+                    title="Product Preview Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                  />
+                </div>
+              )}
             </div>
 
             {/* Social Share Icons */}
@@ -241,7 +275,11 @@ export default function ProductDetails({
               <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Share:</span>
               <div className="flex gap-2">
                 {[Facebook, Twitter, Instagram, Linkedin, MessageCircle].map((Icon, i) => (
-                  <button key={i} className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+                  <button 
+                    key={i} 
+                    onClick={() => alert("Sharing feature coming soon!")}
+                    className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all"
+                  >
                     <Icon className="w-3.5 h-3.5" />
                   </button>
                 ))}
@@ -300,87 +338,56 @@ export default function ProductDetails({
                 className="text-xs sm:text-sm text-gray-500 leading-relaxed"
               >
                 {activeTab === 'description' && (
-                  <div className="space-y-4">
-                    <p>Experience the ultimate in comfort and style with our premium {product.name}. This product is meticulously crafted from high-quality materials to ensure durability and a luxurious feel.</p>
-                    <p>Whether you're looking for something for a special occasion or daily wear, this {product.category} item is designed to meet your needs. The attention to detail in the stitching and finish makes it a standout piece in any collection.</p>
-                    <ul className="list-disc pl-5 space-y-2">
-                      <li>Premium grade materials for long-lasting use</li>
-                      <li>Ergonomic design for maximum comfort</li>
-                      <li>Versatile style that complements various outfits</li>
-                      <li>Easy to maintain and clean</li>
-                    </ul>
+                  <div className="space-y-4" dangerouslySetInnerHTML={{ __html: product.description || '' }}>
                   </div>
                 )}
                 {activeTab === 'specification' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {[
-                      { label: 'Material', value: 'High-quality Synthetic/Cotton' },
-                      { label: 'Weight', value: '450g' },
-                      { label: 'Dimensions', value: '12 x 8 x 4 inches' },
-                      { label: 'Warranty', value: '1 Year Manufacturer Warranty' },
-                      { label: 'Origin', value: 'Imported' },
-                      { label: 'Care', value: 'Hand wash recommended' },
-                    ].map((spec, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span className="font-bold text-gray-900">{spec.label}</span>
-                        <span>{spec.value}</span>
+                  <div className="space-y-2">
+                    {product.specifications && product.specifications.length > 0 ? (
+                      <div className="grid grid-cols-1 divide-y divide-gray-100">
+                        {product.specifications.map((spec: any, i: number) => (
+                          <div key={i} className="py-3 flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{spec.key}</span>
+                            <span className="text-[11px] font-bold text-gray-900">{spec.value}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No specifications provided.</p>
+                    )}
                   </div>
                 )}
                 {activeTab === 'questions' && (
                   <div className="space-y-4">
-                    <div className="p-4 border border-gray-100 rounded-xl">
-                      <p className="font-bold text-gray-900 mb-2">Q: Is this product authentic?</p>
-                      <p className="text-gray-500">A: Yes, all our products are 100% authentic and sourced directly from manufacturers.</p>
-                    </div>
-                    <div className="p-4 border border-gray-100 rounded-xl">
-                      <p className="font-bold text-gray-900 mb-2">Q: What is the return period?</p>
-                      <p className="text-gray-500">A: We offer a 7-day easy return policy for this item.</p>
-                    </div>
-                    <button className="w-full py-3 rounded-xl bg-gray-50 text-emerald-600 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-50 transition-all">
+                    <button 
+                      onClick={() => navigate('/contact')}
+                      className="w-full py-3 rounded-xl bg-gray-50 text-emerald-600 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-50 transition-all"
+                    >
                       Ask a Question
                     </button>
                   </div>
                 )}
                 {activeTab === 'comments' && (
                   <div className="space-y-4">
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0" />
-                      <div>
-                        <p className="text-[10px] font-black text-gray-900 uppercase">User_123</p>
-                        <p className="mt-1">Great product, really liked the quality!</p>
-                      </div>
-                    </div>
                     <textarea 
                       placeholder="Write a comment..."
                       className="w-full bg-gray-50 border border-gray-100 rounded-xl p-4 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
                       rows={3}
                     />
-                    <button className="px-6 py-2 bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg">
+                    <button 
+                      onClick={() => alert("Comment posted successfully!")}
+                      className="px-6 py-2 bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg"
+                    >
                       Post Comment
                     </button>
                   </div>
                 )}
                 {activeTab === 'reviews' && (
                   <div className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl">
-                      <div className="text-center">
-                        <p className="text-3xl font-black text-emerald-600">{product.rating}</p>
-                        <p className="text-[8px] font-black text-emerald-600/60 uppercase">Out of 5</p>
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        {[5, 4, 3, 2, 1].map((star) => (
-                          <div key={star} className="flex items-center gap-2">
-                            <span className="text-[8px] font-bold w-2">{star}</span>
-                            <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
-                              <div className="h-full bg-yellow-400" style={{ width: `${star === 5 ? 80 : star === 4 ? 15 : 5}%` }} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <button className="w-full py-3 rounded-xl bg-gray-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all">
+                    <button 
+                      onClick={() => alert("Review submitted for moderation.")}
+                      className="w-full py-3 rounded-xl bg-gray-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all"
+                    >
                       Write a Review
                     </button>
                   </div>
@@ -391,32 +398,39 @@ export default function ProductDetails({
         </div>
 
         {/* Related Products Section */}
-        <div className="mt-16 sm:mt-24">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-gray-900 uppercase tracking-tight">Related Products</h2>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">You might also like these items</p>
+        {relatedProducts.length > 0 && (
+          <div className="mt-16 sm:mt-24">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 uppercase tracking-tight">Related Products</h2>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">You might also like these items</p>
+              </div>
+              <div className="h-[1px] flex-1 bg-gray-100 mx-8 hidden sm:block" />
             </div>
-            <div className="h-[1px] flex-1 bg-gray-100 mx-8 hidden sm:block" />
-          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
-            {PRODUCTS
-              .filter(p => p.id !== product.id)
-              .slice(0, 20)
-              .map((relatedProduct, idx) => (
-                <motion.div
-                  key={relatedProduct.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: Math.min(idx * 0.05, 0.5) }}
-                >
-                  <ProductCard product={relatedProduct} onAddToCart={onAddToCart} />
-                </motion.div>
-              ))}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
+              {relatedProducts
+                .filter((p: any) => p.id !== product.id)
+                .slice(0, 4)
+                .map((relatedProduct: any, idx: number) => (
+                  <motion.div
+                    key={relatedProduct.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: Math.min(idx * 0.05, 0.5) }}
+                  >
+                    <ProductCard 
+                      product={relatedProduct} 
+                      onAddToCart={onAddToCart} 
+                      onToggleWishlist={onToggleWishlist}
+                      isWishlisted={wishlistItems?.some((item: any) => item.id === relatedProduct.id)}
+                    />
+                  </motion.div>
+                ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

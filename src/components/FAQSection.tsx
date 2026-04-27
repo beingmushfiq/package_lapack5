@@ -1,15 +1,26 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, HelpCircle } from "lucide-react";
-import { FAQS } from "../data/mockData";
+import { useFaqs } from "../lib/queries";
 import { cn } from "../lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export default function FAQSection() {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | number | null>(null);
+  const { data: faqs, isLoading } = useFaqs();
+  const navigate = useNavigate();
 
-  const toggleFaq = (id: string) => {
+  const toggleFaq = (id: string | number) => {
     setOpenId(openId === id ? null : id);
   };
+
+  const displayFaqs = faqs || [];
+
+  if (isLoading) {
+    return <div className="max-w-3xl mx-auto h-64 bg-gray-50 animate-pulse my-8 rounded-2xl"></div>;
+  }
+
+  if (displayFaqs.length === 0) return null;
 
   return (
     <section className="py-8 sm:py-12 bg-white">
@@ -27,7 +38,7 @@ export default function FAQSection() {
         </div>
 
         <div className="space-y-3">
-          {FAQS.slice(0, 5).map((faq, idx) => (
+          {displayFaqs.slice(0, 5).map((faq: any, idx: number) => (
             <motion.div
               key={faq.id}
               initial={{ opacity: 0, y: 10 }}
@@ -80,7 +91,10 @@ export default function FAQSection() {
 
         <div className="mt-10 text-center">
           <p className="text-sm text-gray-500 mb-4">Still have questions?</p>
-          <button className="px-6 py-2.5 bg-gray-900 text-white rounded-full font-bold text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all active:scale-95 shadow-lg shadow-gray-200">
+          <button 
+            onClick={() => navigate('/contact')}
+            className="px-6 py-2.5 bg-gray-900 text-white rounded-full font-bold text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all active:scale-95 shadow-lg shadow-gray-200"
+          >
             Contact Support
           </button>
         </div>

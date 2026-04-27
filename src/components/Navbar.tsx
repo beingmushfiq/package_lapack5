@@ -2,18 +2,8 @@ import { Search, ShoppingCart, User, Menu, Heart, Phone, Globe, X, ChevronRight,
 import { useState } from "react";
 import { cn, formatPrice } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
-import { HIERARCHICAL_CATEGORIES } from "../data/categories";
 import { Link, useNavigate } from "react-router-dom";
-
-const MOBILE_NAV_LINKS = [
-  { name: "Home", href: "/" },
-  { name: "Flash Deal", href: "/flash-deal" },
-  { name: "All Products", href: "/allproducts" },
-  { name: "Seller Shop", href: "/seller-shop" },
-  { name: "Compare", href: "/compare" },
-  { name: "Blogs", href: "/blogs" },
-  { name: "Contact Us", href: "/contact" },
-];
+import { useCategories, useMenus, useSiteSettings } from "../lib/queries";
 
 export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, cartCount = 0, cartTotal = 0 }: { onCartClick?: () => void, onWishlistClick?: () => void, onProfileClick?: () => void, cartCount?: number, cartTotal?: number }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,7 +16,23 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
   const [expandedSubCategory, setExpandedSubCategory] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const categories = ["All Categories", "Fashion", "Electronics", "Home", "Beauty", "Groceries"];
+  const { data: apiCategories } = useCategories();
+  const { data: menus } = useMenus();
+  const { data: settings } = useSiteSettings();
+
+  const categoryTree = apiCategories?.data || [];
+  const topCategories = categoryTree.slice(0, 5).map((c: any) => c.name);
+  const categories = ["All Categories", ...topCategories];
+
+  const MOBILE_NAV_LINKS = menus?.header || [
+    { name: "Home", href: "/" },
+    { name: "Flash Deal", href: "/flash-deal" },
+    { name: "All Products", href: "/allproducts" },
+    { name: "Seller Shop", href: "/seller-shop" },
+    { name: "Compare", href: "/compare" },
+    { name: "Blogs", href: "/blogs" },
+    { name: "Contact Us", href: "/contact" },
+  ];
 
   return (
     <>
@@ -45,11 +51,16 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
           </div>
           <div className="flex items-center gap-3 sm:gap-5">
             <div className="hidden sm:flex items-center gap-4 text-gray-400">
-              <button className="hover:text-white transition-colors">Track Order</button>
-              <button className="hover:text-white transition-colors">Help Center</button>
+              <Link to="/track-order" className="hover:text-white transition-colors">Track Order</Link>
+              <Link to="/help-center" className="hover:text-white transition-colors">Help Center</Link>
             </div>
             <div className="hidden sm:block h-2.5 w-[1px] bg-white/10" />
-            <button className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors font-black">
+            <button 
+              onClick={(e) => {
+                if (window.innerWidth < 640) navigate('/track-order');
+              }}
+              className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors font-black"
+            >
               <span className="sm:hidden">Track Order</span>
               <span className="hidden sm:inline">BN</span>
             </button>
@@ -209,6 +220,7 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
             {/* Mobile Actions */}
             <div className="flex md:hidden items-center gap-1">
               <button 
+                onClick={() => navigate('/track-order')}
                 aria-label="Track Order"
                 className="p-2 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
               >
@@ -354,8 +366,8 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
                   </div>
                 ) : (
                   <div className="space-y-0.5">
-                    {HIERARCHICAL_CATEGORIES.map(cat => (
-                      <div key={cat.name} className="space-y-0.5">
+                    {categoryTree.map((cat: any) => (
+                      <div key={cat.id} className="space-y-0.5">
                         <button
                           onClick={() => setExpandedCategory(expandedCategory === cat.name ? null : cat.name)}
                           className={cn(
@@ -364,53 +376,65 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
                           )}
                         >
                           <span className="flex items-center gap-2.5">
-                            <cat.icon className={cn("w-3.5 h-3.5", expandedCategory === cat.name ? "text-emerald-600" : "text-gray-400")} />
+                            {cat.icon_class ? <i className={cat.icon_class}></i> : <ShoppingBag className={cn("w-3.5 h-3.5", expandedCategory === cat.name ? "text-emerald-600" : "text-gray-400")} />}
                             {cat.name}
                           </span>
-                          {cat.subCategories && (
+                          {cat.children && cat.children.length > 0 && (
                             <ChevronRight className={cn("w-3.5 h-3.5 transition-transform duration-200", expandedCategory === cat.name && "rotate-90")} />
                           )}
                         </button>
 
                         {/* Sub Categories Accordion */}
                         <AnimatePresence>
-                          {cat.subCategories && expandedCategory === cat.name && (
+                          {cat.children && cat.children.length > 0 && expandedCategory === cat.name && (
                             <motion.div
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: "auto", opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
                               className="overflow-hidden ml-4 pl-2 border-l border-emerald-100 space-y-0.5"
                             >
-                              {cat.subCategories.map(sub => (
-                                <div key={sub.name}>
+                              {cat.children.map((sub: any) => (
+                                <div key={sub.id}>
                                   <button
-                                    onClick={() => setExpandedSubCategory(expandedSubCategory === sub.name ? null : sub.name)}
+                                    onClick={(e) => {
+                                      if (sub.children && sub.children.length > 0) {
+                                        setExpandedSubCategory(expandedSubCategory === sub.name ? null : sub.name);
+                                      } else {
+                                        navigate(`/category/${sub.slug}`);
+                                        setIsMobileMenuOpen(false);
+                                      }
+                                    }}
                                     className={cn(
                                       "flex items-center justify-between w-full py-2 text-[10px] font-black uppercase tracking-widest transition-colors",
                                       expandedSubCategory === sub.name ? "text-emerald-600" : "text-gray-500"
                                     )}
                                   >
                                     {sub.name}
-                                    <ChevronRight className={cn("w-3 h-3 transition-transform duration-200", expandedSubCategory === sub.name && "rotate-90")} />
+                                    {sub.children && sub.children.length > 0 && (
+                                      <ChevronRight className={cn("w-3 h-3 transition-transform duration-200", expandedSubCategory === sub.name && "rotate-90")} />
+                                    )}
                                   </button>
 
                                   {/* Child Categories Accordion */}
                                   <AnimatePresence>
-                                    {expandedSubCategory === sub.name && (
+                                    {sub.children && sub.children.length > 0 && expandedSubCategory === sub.name && (
                                       <motion.div
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: "auto", opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
                                         className="overflow-hidden pb-2 space-y-0.5"
                                       >
-                                        {sub.childCategories.map(child => (
-                                          <a
-                                            key={child}
-                                            href="#"
-                                            className="block py-1.5 pl-2 text-[11px] font-bold text-gray-400 hover:text-emerald-600 transition-colors"
+                                        {sub.children.map((child: any) => (
+                                          <button
+                                            key={child.id}
+                                            onClick={() => {
+                                              navigate(`/category/${child.slug}`);
+                                              setIsMobileMenuOpen(false);
+                                            }}
+                                            className="block py-1.5 pl-2 text-[11px] font-bold text-gray-400 hover:text-emerald-600 transition-colors w-full text-left"
                                           >
-                                            {child}
-                                          </a>
+                                            {child.name}
+                                          </button>
                                         ))}
                                       </motion.div>
                                     )}
@@ -427,7 +451,13 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
               </div>
 
               <div className="p-4 border-t border-gray-100">
-                <button className="w-full py-3 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-lg shadow-emerald-500/10 active:scale-95 transition-all uppercase tracking-widest">
+                <button 
+                  onClick={() => {
+                    onProfileClick?.();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full py-3 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-lg shadow-emerald-500/10 active:scale-95 transition-all uppercase tracking-widest"
+                >
                   Sign In
                 </button>
               </div>

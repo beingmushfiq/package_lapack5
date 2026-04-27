@@ -1,4 +1,4 @@
-import { Mail, ChevronDown, Menu } from "lucide-react";
+import { Menu, Mail } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Link } from "react-router-dom";
 
@@ -14,15 +14,15 @@ const NAV_LINKS = [
 
 export default function SubNavbar({ onCategoriesClick }: { onCategoriesClick?: () => void }) {
   return (
-    <div className="hidden md:block bg-white border-b border-gray-100 sticky top-[80px] z-40 shadow-sm">
+    <div className="hidden md:block bg-white border-b border-gray-100 sticky top-[80px] z-50 shadow-sm">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-12">
           
           {/* Left: All Categories Button */}
-          <div className="w-64 flex-shrink-0">
+          <div className="w-64 flex-shrink-0 relative">
             <button
               onClick={onCategoriesClick}
-              className="flex items-center gap-3 px-6 h-12 w-full font-black text-[11px] uppercase tracking-widest transition-all bg-[#0056b3] text-white hover:bg-[#004494]"
+              className="flex items-center gap-3 px-6 h-12 w-full font-black text-[11px] uppercase tracking-widest transition-all bg-[#0056b3] text-white hover:bg-[#004494] rounded-none relative z-50"
             >
               <Menu className="w-4 h-4" />
               ALL CATEGORIES

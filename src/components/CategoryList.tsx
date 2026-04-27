@@ -1,14 +1,32 @@
-import { CATEGORIES } from "../data/mockData";
+import { useCategories } from "../lib/queries";
 import { motion } from "motion/react";
 import { ChevronRight } from "lucide-react";
+import { getImageUrl } from "../lib/utils";
 
 export default function CategoryList({ onSeeMoreClick }: { onSeeMoreClick?: () => void }) {
+  const { data: categories, isLoading } = useCategories();
+  
   // Show 11 categories + 1 "See More" to fill 12 columns on desktop
-  const displayCategories = CATEGORIES.slice(0, 11);
+  const displayCategories = (categories || []).slice(0, 11);
+
+  if (isLoading) {
+    return (
+      <section className="py-2 sm:py-4 bg-white border-b border-gray-50">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+           <div className="h-6 w-48 bg-gray-200 animate-pulse rounded mb-4"></div>
+           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-x-2 gap-y-3 sm:gap-6">
+             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
+               <div key={i} className="w-14 h-14 sm:w-20 sm:h-20 bg-gray-200 animate-pulse rounded-full mx-auto"></div>
+             ))}
+           </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-2 sm:py-4 bg-white border-b border-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-2 sm:mb-4">
           <h2 className="text-sm sm:text-lg font-black text-gray-900 tracking-tight uppercase">
             Shop by <span className="text-emerald-600">Category</span>
@@ -23,7 +41,7 @@ export default function CategoryList({ onSeeMoreClick }: { onSeeMoreClick?: () =
         
         {/* 2-Line Grid Layout */}
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-x-2 gap-y-3 sm:gap-6">
-          {displayCategories.map((category, idx) => (
+          {displayCategories.map((category: any, idx: number) => (
             <motion.button
               key={category.id}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -35,7 +53,7 @@ export default function CategoryList({ onSeeMoreClick }: { onSeeMoreClick?: () =
               <div className="relative w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gray-50 border border-gray-100 group-hover:border-emerald-500/30 transition-all duration-300 overflow-hidden p-1 shadow-sm">
                 <div className="w-full h-full rounded-full overflow-hidden">
                   <img
-                    src={category.image}
+                    src={getImageUrl(category.image)}
                     alt={category.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     referrerPolicy="no-referrer"
