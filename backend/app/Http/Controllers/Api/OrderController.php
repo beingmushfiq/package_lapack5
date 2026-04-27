@@ -99,6 +99,35 @@ class OrderController extends Controller
             \Log::warning('Order confirmation email failed: ' . $e->getMessage());
         }
 
+        // Facebook Conversions API — server-side Purchase event
+        try {
+            $capi = new \App\Services\FacebookCAPIService();
+            $capi->trackPurchase(
+                value: (float) $order->net_amount,
+                currency: 'BDT',
+                contentIds: collect($request->items)->pluck('product_id')->toArray(),
+                userData: [
+                    'em' => $order->shipping_email ?? $request->user()->email,
+                    'ph' => $order->shipping_phone,
+                    'fn' => $order->shipping_first_name,
+                    'ln' => $order->shipping_last_name,
+                    'ct' => $order->shipping_city,
+                    'st' => $order->shipping_state,
+                    'zp' => $order->shipping_zip,
+                    'country' => $order->shipping_country,
+                    'client_ip_address' => $request->ip(),
+                    'client_user_agent' => $request->userAgent(),
+                    'fbc' => $request->cookie('_fbc'),
+                    'fbp' => $request->cookie('_fbp'),
+                    'event_source_url' => $request->header('Referer'),
+                ],
+                eventId: 'purchase_' . $order->order_number,
+                orderNumber: $order->order_number
+            );
+        } catch (\Throwable $e) {
+            \Log::warning('Facebook CAPI Purchase event failed: ' . $e->getMessage());
+        }
+
         return response()->json($order->load('items'), 201);
     }
 }

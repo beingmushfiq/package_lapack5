@@ -5,6 +5,7 @@ import { formatPrice } from "../lib/utils";
 import { useAuth } from "../lib/AuthContext";
 import { usePaymentMethods, useShippingZones } from "../lib/queries";
 import api from "../lib/api";
+import { trackFBEvent, trackGTMEvent } from "../lib/tracking";
 
 interface CartItem {
   id: string;
@@ -140,6 +141,27 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
 
       const { data } = await api.post('/orders', orderData);
       
+      // Track Purchase
+      trackFBEvent('Purchase', {
+        value: total,
+        currency: 'BDT',
+        content_ids: items.map(item => item.id),
+        content_type: 'product',
+        num_items: items.length
+      });
+
+      trackGTMEvent('purchase', {
+        transaction_id: data.order_number || data.id,
+        value: total,
+        currency: 'BDT',
+        items: items.map(item => ({
+          item_id: item.id,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      });
+
       toast.success('Order placed successfully!', {
         duration: 5000,
         icon: '🎉',

@@ -30,6 +30,7 @@ import { useAuth } from "./lib/AuthContext";
 import { useSiteSettings } from "./lib/queries";
 import { Toaster, toast } from "react-hot-toast";
 import { OrganizationSchema, WebSiteSchema } from "./components/StructuredData";
+import { initTrackingScripts, trackFBEvent, trackGTMEvent } from "./lib/tracking";
 
 export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -56,20 +57,10 @@ export default function App() {
 
   // Tracking Scripts Injection
   useEffect(() => {
-    if (settings?.tracking_scripts) {
-      // Create a temporary div to parse scripts
-      const div = document.createElement('div');
-      div.innerHTML = settings.tracking_scripts;
-      const scripts = div.querySelectorAll('script');
-      
-      scripts.forEach(oldScript => {
-        const newScript = document.createElement('script');
-        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-        document.head.appendChild(newScript);
-      });
+    if (settings) {
+      initTrackingScripts(settings);
     }
-  }, [settings?.tracking_scripts]);
+  }, [settings]);
 
   const handleAddToCart = (product: any) => {
     if (product) {
@@ -81,6 +72,22 @@ export default function App() {
           );
         }
         return [...prev, { ...product, quantity: 1, variation: "Default" }];
+      });
+
+      // Track Event
+      trackFBEvent('AddToCart', {
+        content_name: product.name,
+        content_ids: [product.id],
+        content_type: 'product',
+        value: product.price,
+        currency: 'BDT'
+      });
+
+      trackGTMEvent('add_to_cart', {
+        item_id: product.id,
+        item_name: product.name,
+        value: product.price,
+        currency: 'BDT'
       });
     }
     setIsCartOpen(true);
@@ -100,6 +107,23 @@ export default function App() {
     setPurchaseItems([...cartItems]);
     setIsCartOpen(false);
     setIsPurchaseOpen(true);
+
+    // Track InitiateCheckout
+    trackFBEvent('InitiateCheckout', {
+      num_items: cartItems.length,
+      value: cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
+      currency: 'BDT'
+    });
+
+    trackGTMEvent('begin_checkout', {
+      value: cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
+      items: cartItems.map(item => ({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      }))
+    });
   };
 
   const handleOrderNow = (product: any) => {

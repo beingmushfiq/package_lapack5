@@ -12,6 +12,7 @@ import { useProduct, useProducts } from "../lib/queries";
 import { toast } from "react-hot-toast";
 import { ProductSchema, BreadcrumbSchema } from "../components/StructuredData";
 import { cn } from "../lib/utils";
+import { trackFBEvent, trackGTMEvent } from "../lib/tracking";
 
 export default function ProductDetails({ 
   onAddToCart, 
@@ -40,6 +41,31 @@ export default function ProductDetails({
   const relatedProducts = relatedResponse?.data || [];
 
   const images = product ? (product.images?.length > 0 ? product.images : [product.image || "https://picsum.photos/seed/p1/600/800", "https://picsum.photos/seed/p2/600/800", "https://picsum.photos/seed/p3/600/800"]) : [];
+
+  useEffect(() => {
+    if (product) {
+      trackFBEvent('ViewContent', {
+        content_name: product.name,
+        content_ids: [product.id],
+        content_type: 'product',
+        value: product.discount_price || product.price,
+        currency: 'BDT'
+      });
+
+      trackGTMEvent('view_item', {
+        currency: 'BDT',
+        value: product.discount_price || product.price,
+        items: [
+          {
+            item_id: product.id,
+            item_name: product.name,
+            price: product.discount_price || product.price,
+            quantity: 1
+          }
+        ]
+      });
+    }
+  }, [product]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
