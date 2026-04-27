@@ -39,10 +39,17 @@ class ProductsTable
                 TextColumn::make('reviews')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('discount_price')
+                    ->money()
+                    ->sortable(),
                 IconColumn::make('is_new')
                     ->boolean(),
+                IconColumn::make('is_featured')
+                    ->label('Featured')
+                    ->boolean(),
                 TextColumn::make('sold_count')
-                    ->searchable(),
+                    ->numeric()
+                    ->sortable(),
                 IconColumn::make('in_stock')
                     ->boolean(),
                 TextColumn::make('created_at')

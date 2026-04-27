@@ -41,11 +41,18 @@ class ProductForm
                     ->required()
                     ->numeric()
                     ->default(0),
+                TextInput::make('discount_price')
+                    ->numeric()
+                    ->prefix('$'),
                 Toggle::make('is_new')
                     ->required(),
+                Toggle::make('is_featured')
+                    ->required()
+                    ->label('Featured (Trending)'),
                 TextInput::make('sold_count')
                     ->required()
-                    ->default('0'),
+                    ->numeric()
+                    ->default(0),
                 Toggle::make('in_stock')
                     ->required(),
             ]);
