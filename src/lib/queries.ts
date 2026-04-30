@@ -125,3 +125,52 @@ export const useShippingZones = () => {
     },
   });
 };
+
+export const usePromotionalBanners = () => {
+  return useQuery({
+    queryKey: ['promotionalBanners'],
+    queryFn: async () => {
+      const { data } = await api.get('/promotional-banners');
+      return data;
+    },
+  });
+};
+
+// ─── CMS Page Builder Queries ────────────────────────────────
+
+export const useCMSHomepage = () => {
+  return useQuery({
+    queryKey: ['cms', 'homepage'],
+    queryFn: async () => {
+      const { data } = await api.get('/cms/homepage');
+      return data;
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000,
+  });
+};
+
+export const useCMSPage = (slug: string) => {
+  return useQuery({
+    queryKey: ['cms', 'page', slug],
+    queryFn: async () => {
+      const { data } = await api.get(`/cms/pages/${slug}`);
+      return data;
+    },
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+};
+
+export const useCMSSectionTypes = () => {
+  return useQuery({
+    queryKey: ['cms', 'sectionTypes'],
+    queryFn: async () => {
+      const { data } = await api.get('/cms/section-types');
+      return data;
+    },
+    staleTime: 30 * 60 * 1000, // Cache for 30 minutes (rarely changes)
+  });
+};
+

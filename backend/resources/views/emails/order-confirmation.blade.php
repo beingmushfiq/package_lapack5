@@ -39,12 +39,11 @@
 
             <p class="section-title">Shipping Details</p>
             <div style="background: #f9fafb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-                <strong style="color: #111827;">{{ $order->shipping_first_name }} {{ $order->shipping_last_name }}</strong><br>
+                <strong style="color: #111827;">{{ $order->customer_name }}</strong><br>
                 <span style="color: #6b7280; font-size: 14px;">
                     {{ $order->shipping_address }}<br>
-                    {{ $order->shipping_city }}{{ $order->shipping_state ? ', ' . $order->shipping_state : '' }}
-                    {{ $order->shipping_zip }}<br>
-                    📞 {{ $order->shipping_phone }}
+                    {{ $order->area ? $order->area . ', ' : '' }}{{ $order->district }}<br>
+                    📞 {{ $order->customer_phone }}
                 </span>
             </div>
 
@@ -60,14 +59,14 @@
                 <tbody>
                     @foreach($order->items as $item)
                     <tr>
-                        <td>{{ $item->product?->name ?? 'Product #' . $item->product_id }}</td>
+                        <td>{{ $item->product_name ?? ($item->product?->name ?? 'Product #' . $item->product_id) }}</td>
                         <td>{{ $item->quantity }}</td>
                         <td style="text-align: right;">৳{{ number_format($item->total, 0) }}</td>
                     </tr>
                     @endforeach
                     <tr class="total-row">
                         <td colspan="2">Total</td>
-                        <td style="text-align: right;">৳{{ number_format($order->net_amount, 0) }}</td>
+                        <td style="text-align: right;">৳{{ number_format($order->payable_amount, 0) }}</td>
                     </tr>
                 </tbody>
             </table>

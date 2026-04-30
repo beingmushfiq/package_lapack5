@@ -30,7 +30,7 @@ export default function ProductDetails({
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('description');
-  const sliderInterval = useRef<NodeJS.Timeout | null>(null);
+  const sliderInterval = useRef<any>(null);
 
   // Fetch product by slug
   const { data: productResponse, isLoading } = useProduct(productName || '');

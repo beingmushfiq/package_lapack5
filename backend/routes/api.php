@@ -29,6 +29,18 @@ Route::prefix('v1')->group(function () {
     Route::get('/track-order', [\App\Http\Controllers\Api\OrderController::class, 'track']);
     Route::get('/payment-methods', [FrontendController::class, 'paymentMethods']);
     Route::get('/shipping-zones', [FrontendController::class, 'shippingZones']);
+    Route::get('/promotional-banners', [FrontendController::class, 'promotionalBanners']);
+    
+    // CMS Page Builder Routes
+    Route::prefix('cms')->group(function () {
+        Route::get('/homepage', [\App\Http\Controllers\Api\PageBuilderController::class, 'homepage']);
+        Route::get('/pages/{slug}', [\App\Http\Controllers\Api\PageBuilderController::class, 'show']);
+        Route::get('/layouts', [\App\Http\Controllers\Api\PageBuilderController::class, 'layouts']);
+        Route::get('/section-types', [\App\Http\Controllers\Api\PageBuilderController::class, 'sectionTypes']);
+    });
+    
+    // Webhooks
+    Route::post('webhooks/courier', [\App\Http\Controllers\Api\WebhookController::class, 'courier']);
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {

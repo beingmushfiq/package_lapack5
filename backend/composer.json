@@ -7,12 +7,15 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "barryvdh/laravel-dompdf": "*",
         "bezhansalleh/filament-shield": "^4.2",
         "filament/filament": "^5.6",
+        "flowframe/laravel-trend": "*",
         "intervention/image-laravel": "^4.0",
         "laravel/framework": "^13.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
+        "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-permission": "^7.3"
     },
     "require-dev": {

@@ -45,53 +45,55 @@ class OrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'shipping_first_name' => 'required|string',
-            'shipping_last_name' => 'required|string',
+            'customer_name' => 'required|string',
+            'customer_phone' => 'required|string',
             'shipping_address' => 'required|string',
-            'shipping_city' => 'required|string',
-            'shipping_phone' => 'required|string',
-            'payment_method_id' => 'required|exists:payment_methods,id',
+            'district' => 'required|string',
+            'area' => 'nullable|string',
+            'payment_method' => 'required|string',
         ]);
 
         $totalAmount = collect($request->items)->sum(function ($item) {
             return $item['quantity'] * $item['unit_price'];
         });
 
+        $shippingCost = $request->shipping_cost ?? 0;
+        $discountAmount = $request->discount_amount ?? 0;
+        $payableAmount = $totalAmount + $shippingCost - $discountAmount;
+
         $order = Order::create([
-            'user_id' => $request->user()->id,
+            'user_id' => $request->user()?->id,
             'order_number' => 'ORD-' . strtoupper(Str::random(8)),
             'status' => 'pending',
             'total_amount' => $totalAmount,
-            'shipping_fee' => $request->shipping_fee ?? 0,
-            'discount_amount' => $request->discount_amount ?? 0,
-            'net_amount' => $totalAmount + ($request->shipping_fee ?? 0) - ($request->discount_amount ?? 0),
-            'shipping_first_name' => $request->shipping_first_name,
-            'shipping_last_name' => $request->shipping_last_name,
-            'shipping_email' => $request->shipping_email ?? $request->user()->email,
-            'shipping_phone' => $request->shipping_phone,
+            'shipping_cost' => $shippingCost,
+            'discount_amount' => $discountAmount,
+            'payable_amount' => $payableAmount,
+            'customer_name' => $request->customer_name,
+            'customer_phone' => $request->customer_phone,
+            'customer_email' => $request->customer_email ?? $request->user()?->email,
             'shipping_address' => $request->shipping_address,
-            'shipping_city' => $request->shipping_city,
-            'shipping_state' => $request->shipping_state,
-            'shipping_zip' => $request->shipping_zip,
-            'shipping_country' => $request->shipping_country ?? 'BD',
-            'payment_method_id' => $request->payment_method_id,
+            'district' => $request->district,
+            'area' => $request->area,
+            'payment_method' => $request->payment_method,
             'payment_status' => 'pending',
-            'notes' => $request->notes,
+            'customer_note' => $request->notes,
         ]);
 
         foreach ($request->items as $item) {
             $order->items()->create([
                 'product_id' => $item['product_id'],
-                'product_variation_id' => $item['product_variation_id'] ?? null,
+                'product_name' => \App\Models\Product::find($item['product_id'])->name,
                 'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
+                'price' => $item['unit_price'],
                 'total' => $item['quantity'] * $item['unit_price'],
+                'variation' => $item['variation'] ?? null,
             ]);
         }
 
         // Send confirmation email
         try {
-            $email = $order->shipping_email ?? $request->user()->email;
+            $email = $order->customer_email;
             if ($email) {
                 Mail::to($email)->send(new OrderConfirmation($order->load('items.product')));
             }
@@ -99,27 +101,21 @@ class OrderController extends Controller
             \Log::warning('Order confirmation email failed: ' . $e->getMessage());
         }
 
-        // Facebook Conversions API — server-side Purchase event
+        // Facebook Conversions API
         try {
             $capi = new \App\Services\FacebookCAPIService();
             $capi->trackPurchase(
-                value: (float) $order->net_amount,
+                value: (float) $order->payable_amount,
                 currency: 'BDT',
                 contentIds: collect($request->items)->pluck('product_id')->toArray(),
                 userData: [
-                    'em' => $order->shipping_email ?? $request->user()->email,
-                    'ph' => $order->shipping_phone,
-                    'fn' => $order->shipping_first_name,
-                    'ln' => $order->shipping_last_name,
-                    'ct' => $order->shipping_city,
-                    'st' => $order->shipping_state,
-                    'zp' => $order->shipping_zip,
-                    'country' => $order->shipping_country,
+                    'em' => $order->customer_email,
+                    'ph' => $order->customer_phone,
+                    'fn' => $order->customer_name,
+                    'ct' => $order->district,
+                    'country' => 'BD',
                     'client_ip_address' => $request->ip(),
                     'client_user_agent' => $request->userAgent(),
-                    'fbc' => $request->cookie('_fbc'),
-                    'fbp' => $request->cookie('_fbp'),
-                    'event_source_url' => $request->header('Referer'),
                 ],
                 eventId: 'purchase_' . $order->order_number,
                 orderNumber: $order->order_number
@@ -129,5 +125,23 @@ class OrderController extends Controller
         }
 
         return response()->json($order->load('items'), 201);
+    }
+
+    /**
+     * Download PDF invoice.
+     */
+    public function downloadInvoice(Order $order)
+    {
+        // Ensure user has access (either admin or the customer)
+        $user = auth()->user();
+        if ($user && ($user->hasRole('Super Admin') || $user->id === $order->user_id)) {
+            $order->load(['items', 'items.product']);
+            
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.invoice', compact('order'));
+            
+            return $pdf->download("invoice-{$order->order_number}.pdf");
+        }
+
+        abort(403);
     }
 }

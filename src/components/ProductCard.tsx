@@ -35,10 +35,10 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
         />
         
         {/* Discount Badge */}
-        {product.discount && (
+        {product.discount_price && (
           <div className="absolute top-4 left-4">
-            <span className="bg-[#ff4d4d] text-white text-xs font-bold px-2.5 py-1 rounded-md shadow-lg">
-              -{product.discount}%
+            <span className="bg-[#ff4d4d] text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-lg">
+              -{Math.round(((product.price - product.discount_price) / product.price) * 100)}%
             </span>
           </div>
         )}
@@ -74,11 +74,11 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
           <div className="flex items-baseline gap-1 sm:gap-2">
             <span className="text-sm sm:text-xl font-extrabold text-gray-900">
-              {formatPrice(product.price)}
+              {formatPrice(product.discount_price || product.price)}
             </span>
-            {product.originalPrice && (
+            {product.discount_price && (
               <span className="text-[9px] sm:text-sm text-gray-400 line-through font-medium">
-                {formatPrice(product.originalPrice)}
+                {formatPrice(product.price)}
               </span>
             )}
           </div>
@@ -86,10 +86,10 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
 
         <div className="flex items-center justify-between text-[9px] sm:text-xs font-semibold">
           <div className="flex items-center gap-0.5 sm:gap-1">
-            <Star className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-yellow-400 fill-current" />
-            <span className="text-gray-400">({product.rating})</span>
+            < Star className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-yellow-400 fill-current" />
+            <span className="text-gray-400">({product.rating || "5.0"})</span>
           </div>
-          <span className="text-gray-500">{product.soldCount || "0"} Sold</span>
+          <span className="text-gray-500">{product.sold_count || "0"} Sold</span>
         </div>
         
         {/* Action Buttons */}

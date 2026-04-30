@@ -1,6 +1,8 @@
-import { Menu, Mail } from "lucide-react";
+import { Menu, Mail, ChevronDown } from "lucide-react";
 import { cn } from "../lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import CategoryDropdown from "./CategoryDropdown";
 
 const NAV_LINKS = [
   { name: "Home", href: "/" },
@@ -13,20 +15,42 @@ const NAV_LINKS = [
 ];
 
 export default function SubNavbar({ onCategoriesClick }: { onCategoriesClick?: () => void }) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
   return (
     <div className="hidden md:block bg-white border-b border-gray-100 sticky top-[80px] z-50 shadow-sm">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-12">
           
-          {/* Left: All Categories Button */}
-          <div className="w-64 flex-shrink-0 relative">
+          {/* Left: All Categories Button with Dropdown */}
+          <div 
+            className="w-64 flex-shrink-0 relative"
+            onMouseEnter={() => setIsDropdownOpen(true)}
+            onMouseLeave={() => setIsDropdownOpen(false)}
+          >
             <button
-              onClick={onCategoriesClick}
-              className="flex items-center gap-3 px-6 h-12 w-full font-black text-[11px] uppercase tracking-widest transition-all bg-[#0056b3] text-white hover:bg-[#004494] rounded-none relative z-50"
+              onClick={() => {
+                if (window.innerWidth < 1024) {
+                   onCategoriesClick?.();
+                } else {
+                   setIsDropdownOpen(!isDropdownOpen);
+                }
+              }}
+              className="flex items-center justify-between gap-3 px-6 h-12 w-full font-black text-[11px] uppercase tracking-widest transition-all bg-[#0056b3] text-white hover:bg-[#004494] rounded-none relative z-[60]"
             >
-              <Menu className="w-4 h-4" />
-              ALL CATEGORIES
+              <div className="flex items-center gap-3">
+                <Menu className="w-4 h-4" />
+                ALL CATEGORIES
+              </div>
+              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isDropdownOpen && "rotate-180")} />
             </button>
+
+            <CategoryDropdown 
+                isOpen={isDropdownOpen} 
+                onClose={() => setIsDropdownOpen(false)} 
+            />
           </div>
 
           {/* Center: Page Navigation Bar */}

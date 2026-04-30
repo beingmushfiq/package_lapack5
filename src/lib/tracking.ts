@@ -1,3 +1,12 @@
+declare global {
+  interface Window {
+    fbq: any;
+    _fbq: any;
+    dataLayer: any[];
+    dataLayer_initialized: boolean;
+  }
+}
+
 // Store test event code globally so trackFBEvent can use it
 let _fbTestEventCode: string | null = null;
 

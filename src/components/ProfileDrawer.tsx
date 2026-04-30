@@ -24,13 +24,13 @@ export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
   };
 
   const menuItems = [
-    { icon: Package, label: "My Orders", count: 5, color: "text-blue-600", bg: "bg-blue-50" },
-    { icon: Heart, label: "My Wishlist", count: 12, color: "text-pink-600", bg: "bg-pink-50" },
-    { icon: Bell, label: "Notifications", count: 3, color: "text-orange-600", bg: "bg-orange-50" },
-    { icon: CreditCard, label: "Payment Methods", color: "text-emerald-600", bg: "bg-emerald-50" },
-    { icon: MapPin, label: "Shipping Address", color: "text-purple-600", bg: "bg-purple-50" },
-    { icon: Shield, label: "Privacy & Security", color: "text-gray-600", bg: "bg-gray-100" },
-    { icon: Settings, label: "Account Settings", color: "text-gray-600", bg: "bg-gray-100" },
+    { icon: Package, label: "My Orders", count: 0, color: "text-blue-600", bg: "bg-blue-50", path: "/order-history" },
+    { icon: Heart, label: "My Wishlist", count: 0, color: "text-pink-600", bg: "bg-pink-50", path: "/wishlist" },
+    { icon: Bell, label: "Notifications", count: 0, color: "text-orange-600", bg: "bg-orange-50", path: "/notifications" },
+    { icon: CreditCard, label: "Payment Methods", color: "text-emerald-600", bg: "bg-emerald-50", path: "/payment-methods" },
+    { icon: MapPin, label: "Shipping Address", color: "text-purple-600", bg: "bg-purple-50", path: "/shipping-address" },
+    { icon: Shield, label: "Privacy & Security", color: "text-gray-600", bg: "bg-gray-100", path: "/privacy" },
+    { icon: Settings, label: "Account Settings", color: "text-gray-600", bg: "bg-gray-100", path: "/settings" },
   ];
 
   if (!user) return null;
@@ -93,7 +93,7 @@ export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                     )}
                   </div>
                   <button 
-                    onClick={() => alert("Settings coming soon!")}
+                    onClick={() => window.location.href = '/settings'}
                     className="absolute bottom-3 right-0 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg border-2 border-white hover:bg-emerald-700 transition-all"
                   >
                     <Settings className="w-3 h-3" />
@@ -101,22 +101,6 @@ export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                 </div>
                 <h3 className="text-base font-black text-gray-900 tracking-tight uppercase">{user.name}</h3>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{user.email}</p>
-                <div className="mt-4 flex items-center gap-4">
-                  <div className="text-center">
-                    <p className="text-xs font-black text-gray-900">0</p>
-                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Orders</p>
-                  </div>
-                  <div className="w-[1px] h-4 bg-gray-200" />
-                  <div className="text-center">
-                    <p className="text-xs font-black text-gray-900">৳0</p>
-                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Spent</p>
-                  </div>
-                  <div className="w-[1px] h-4 bg-gray-200" />
-                  <div className="text-center">
-                    <p className="text-xs font-black text-gray-900">0</p>
-                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Points</p>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -125,7 +109,10 @@ export default function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
               {menuItems.map((item, idx) => (
                 <button
                   key={idx}
-                  onClick={() => alert(`${item.label} coming soon!`)}
+                  onClick={() => {
+                    window.location.href = item.path;
+                    onClose();
+                  }}
                   className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
                 >
                   <div className="flex items-center gap-3">

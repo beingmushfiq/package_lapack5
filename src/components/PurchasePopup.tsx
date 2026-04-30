@@ -1,6 +1,7 @@
 import { X, Trash2, Plus, Minus, CreditCard, Truck, CheckCircle2, Wallet, Smartphone, Globe, ChevronRight, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { formatPrice } from "../lib/utils";
 import { useAuth } from "../lib/AuthContext";
 import { usePaymentMethods, useShippingZones } from "../lib/queries";
@@ -116,27 +117,25 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
     setError('');
 
     try {
+      const selectedPaymentMethod = paymentMethods.find((m: any) => m.id === paymentMethodId);
+      
       const orderData = {
         items: items.map(item => ({
           product_id: item.id,
           quantity: item.quantity,
           unit_price: item.price,
-          // If the backend expects product_variation_id, we need to map it here
-          // For now, we'll send null or a default if available
-          product_variation_id: null 
+          variation: item.variation || null 
         })),
-        shipping_first_name: formData.firstName,
-        shipping_last_name: formData.lastName,
+        customer_name: `${formData.firstName} ${formData.lastName}`.trim(),
+        customer_phone: formData.number,
+        customer_email: formData.email || user.email,
         shipping_address: formData.address,
-        shipping_city: formData.city || selectedShippingZone?.name || '',
-        shipping_phone: formData.number,
-        shipping_email: formData.email || user.email,
-        shipping_state: formData.state,
-        shipping_zip: formData.zip,
-        shipping_country: formData.country,
-        payment_method_id: paymentMethodId,
-        shipping_fee: shippingCost,
-        pay_only_shipping: payOnlyShipping
+        district: formData.city || selectedShippingZone?.name || '',
+        area: formData.state || '',
+        payment_method: selectedPaymentMethod?.code || 'cod',
+        shipping_cost: shippingCost,
+        discount_amount: 0, // Placeholder for coupon logic
+        notes: `Pay Only Shipping: ${payOnlyShipping ? 'Yes' : 'No'}`
       };
 
       const { data } = await api.post('/orders', orderData);

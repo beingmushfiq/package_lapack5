@@ -23,6 +23,8 @@ import SellerShop from "./pages/SellerShop";
 import Compare from "./pages/Compare";
 import Blogs from "./pages/Blogs";
 import ContactUs from "./pages/ContactUs";
+import OrderHistory from "./pages/OrderHistory";
+import DynamicPage from "./pages/DynamicPage";
 import AuthModal from "./components/AuthModal";
 import LoadingBar from 'react-top-loading-bar';
 import { useState, useEffect } from "react";
@@ -61,6 +63,13 @@ export default function App() {
       initTrackingScripts(settings);
     }
   }, [settings]);
+
+  // Listen for custom event to open category overlay from dropdown
+  useEffect(() => {
+    const handleOpenOverlay = () => setIsCategoryOverlayOpen(true);
+    window.addEventListener('open-category-overlay', handleOpenOverlay);
+    return () => window.removeEventListener('open-category-overlay', handleOpenOverlay);
+  }, []);
 
   const handleAddToCart = (product: any) => {
     if (product) {
@@ -208,6 +217,9 @@ export default function App() {
           <Route path="/compare" element={<Compare />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/contact" element={<ContactUs />} />
+          <Route path="/order-history" element={<OrderHistory />} />
+          {/* CMS Dynamic Pages — catch-all route for CMS-managed pages */}
+          <Route path="/page/:slug" element={<DynamicPage onAddToCart={handleAddToCart} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} onCategorySeeMore={() => setIsCategoryOverlayOpen(true)} />} />
         </Routes>
 
         <Footer />

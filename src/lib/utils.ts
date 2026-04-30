@@ -15,5 +15,6 @@ export function formatPrice(price: number) {
 export function getImageUrl(path: string) {
   if (!path) return "";
   if (path.startsWith("http")) return path;
-  return `http://localhost:8000${path}`;
+  if (path.startsWith("/")) return `http://localhost:8000${path}`;
+  return `http://localhost:8000/storage/${path}`;
 }

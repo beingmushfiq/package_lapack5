@@ -18,6 +18,7 @@ use App\Models\ClientReview;
 use App\Models\Page;
 use App\Models\PaymentMethod;
 use App\Models\ShippingZone;
+use App\Models\PromotionalBanner;
 
 class FrontendController extends Controller
 {
@@ -155,5 +156,10 @@ class FrontendController extends Controller
     public function shippingZones()
     {
         return response()->json(ShippingZone::where('is_active', true)->get());
+    }
+
+    public function promotionalBanners()
+    {
+        return response()->json(PromotionalBanner::where('is_active', true)->orderBy('order')->get());
     }
 }

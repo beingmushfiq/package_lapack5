@@ -37,8 +37,9 @@ export default function TrackOrder() {
   }, []);
 
   const getStatusStep = (status: string) => {
-    const steps = ['pending', 'processing', 'shipped', 'delivered'];
-    return steps.indexOf(status.toLowerCase());
+    const steps = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+    const idx = steps.indexOf(status.toLowerCase());
+    return idx === -1 ? 0 : idx;
   };
 
   return (
@@ -110,6 +111,7 @@ export default function TrackOrder() {
                   <div className="space-y-8 relative">
                     {[
                       { icon: CheckCircle2, title: 'Order Placed', desc: 'We have received your order.', status: 'pending' },
+                      { icon: CheckCircle2, title: 'Confirmed', desc: 'Your order has been verified.', status: 'confirmed' },
                       { icon: Package, title: 'Processing', desc: 'Your order is being packed.', status: 'processing' },
                       { icon: Truck, title: 'Shipped', desc: 'Your order is on the way.', status: 'shipped' },
                       { icon: MapPin, title: 'Delivered', desc: 'Package has been delivered.', status: 'delivered' }
