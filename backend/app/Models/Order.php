@@ -18,6 +18,15 @@ class Order extends Model
             ->logOnlyDirty();
     }
 
+    protected static function booted()
+    {
+        static::creating(function ($order) {
+            if (!$order->order_number) {
+                $order->order_number = 'ORD-' . strtoupper(\Illuminate\Support\Str::random(8));
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id', 'order_number', 'total_amount', 'shipping_cost', 'discount_amount', 'payable_amount',
         'status', 'payment_method', 'payment_status', 'coupon_code',

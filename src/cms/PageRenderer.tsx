@@ -7,6 +7,7 @@
 import { useEffect } from 'react';
 import SectionRenderer from './SectionRenderer';
 import type { CMSPage } from './types';
+import { useLayout } from '../lib/LayoutContext';
 
 interface PageRendererProps {
   page: CMSPage;
@@ -70,7 +71,24 @@ export default function PageRenderer({
       const ldScript = document.querySelector('#cms-page-jsonld');
       if (ldScript) ldScript.remove();
     };
-  }, [page]);
+  }, [page.meta, page.title]);
+
+  // ─── Sync CMS Layout with Global App Shell ────────────────
+  const { setLayout, resetLayout } = useLayout();
+
+  useEffect(() => {
+    if (page.layout) {
+      setLayout({
+        showHeader: page.layout.show_header ?? true,
+        showFooter: page.layout.show_footer ?? true,
+        showSubNavbar: page.layout.show_sub_navbar ?? true,
+      });
+    }
+
+    return () => {
+      resetLayout();
+    };
+  }, [page.layout, setLayout, resetLayout]);
 
   // ─── Layout-level styles ──────────────────────────────────
   const containerWidth = page.layout?.container_width || '1440px';

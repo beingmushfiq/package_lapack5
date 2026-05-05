@@ -33,6 +33,7 @@ import { useSiteSettings } from "./lib/queries";
 import { Toaster, toast } from "react-hot-toast";
 import { OrganizationSchema, WebSiteSchema } from "./components/StructuredData";
 import { initTrackingScripts, trackFBEvent, trackGTMEvent } from "./lib/tracking";
+import { useLayout } from "./lib/LayoutContext";
 
 export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -51,6 +52,7 @@ export default function App() {
   const [progress, setProgress] = useState(0);
   const { user } = useAuth();
   const { data: settings } = useSiteSettings();
+  const { layout } = useLayout();
 
   // Wishlist Sync with Local Storage
   useEffect(() => {
@@ -189,21 +191,27 @@ export default function App() {
           height={3}
           shadow={true}
         />
-        <Navbar 
-          onCartClick={() => setIsCartOpen(true)} 
-          onWishlistClick={() => setIsWishlistOpen(true)}
-          onProfileClick={() => {
-            if (user) {
-              setIsProfileOpen(true);
-            } else {
-              setAuthMode('login');
-              setIsAuthModalOpen(true);
-            }
-          }}
-          cartCount={cartCount}
-          cartTotal={cartTotal}
-        />
-        <SubNavbar onCategoriesClick={() => setIsCategoryOverlayOpen(true)} />
+        
+        {layout.showHeader && (
+          <Navbar 
+            onCartClick={() => setIsCartOpen(true)} 
+            onWishlistClick={() => setIsWishlistOpen(true)}
+            onProfileClick={() => {
+              if (user) {
+                setIsProfileOpen(true);
+              } else {
+                setAuthMode('login');
+                setIsAuthModalOpen(true);
+              }
+            }}
+            cartCount={cartCount}
+            cartTotal={cartTotal}
+          />
+        )}
+        
+        {layout.showSubNavbar && (
+          <SubNavbar onCategoriesClick={() => setIsCategoryOverlayOpen(true)} />
+        )}
         
         <Routes>
           <Route path="/" element={<Home onCategorySeeMore={() => setIsCategoryOverlayOpen(true)} onAddToCart={handleAddToCart} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} />} />
@@ -222,7 +230,8 @@ export default function App() {
           <Route path="/page/:slug" element={<DynamicPage onAddToCart={handleAddToCart} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} onCategorySeeMore={() => setIsCategoryOverlayOpen(true)} />} />
         </Routes>
 
-        <Footer />
+        {layout.showFooter && <Footer />}
+        
         <BottomNav 
           onCartClick={() => setIsCartOpen(true)} 
           onWishlistClick={() => setIsWishlistOpen(true)}

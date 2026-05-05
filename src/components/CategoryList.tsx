@@ -2,9 +2,11 @@ import { useCategories } from "../lib/queries";
 import { motion } from "motion/react";
 import { ChevronRight } from "lucide-react";
 import { getImageUrl } from "../lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export default function CategoryList({ onSeeMoreClick }: { onSeeMoreClick?: () => void }) {
   const { data: categories, isLoading } = useCategories();
+  const navigate = useNavigate();
   
   // Show 11 categories + 1 "See More" to fill 12 columns on desktop
   const displayCategories = (categories || []).slice(0, 11);
@@ -48,6 +50,7 @@ export default function CategoryList({ onSeeMoreClick }: { onSeeMoreClick?: () =
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.02 }}
               viewport={{ once: true }}
+              onClick={() => navigate(`/allproducts?category=${category.slug}`)}
               className="group flex flex-col items-center gap-1.5"
             >
               <div className="relative w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gray-50 border border-gray-100 group-hover:border-emerald-500/30 transition-all duration-300 overflow-hidden p-1 shadow-sm">

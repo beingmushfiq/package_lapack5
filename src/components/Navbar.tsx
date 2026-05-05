@@ -24,14 +24,16 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
   const topCategories = categoryTree.slice(0, 5).map((c: any) => c.name);
   const categories = ["All Categories", ...topCategories];
 
-  const MOBILE_NAV_LINKS = menus?.header || [
-    { name: "Home", href: "/" },
-    { name: "Flash Deal", href: "/flash-deal" },
-    { name: "All Products", href: "/allproducts" },
-    { name: "Seller Shop", href: "/seller-shop" },
-    { name: "Compare", href: "/compare" },
-    { name: "Blogs", href: "/blogs" },
-    { name: "Contact Us", href: "/contact" },
+  const sitePhone = settings?.site_phone || "+880 1234 567890";
+
+  const mobileNavLinks = menus?.header || [
+    { name: "Home", url: "/" },
+    { name: "Flash Deal", url: "/flash-deal" },
+    { name: "All Products", url: "/allproducts" },
+    { name: "Seller Shop", url: "/seller-shop" },
+    { name: "Compare", url: "/compare" },
+    { name: "Blogs", url: "/blogs" },
+    { name: "Contact Us", url: "/contact" },
   ];
 
   return (
@@ -42,7 +44,7 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
           <div className="flex items-center gap-3 sm:gap-6">
             <span className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors cursor-pointer">
               <Phone className="w-2.5 h-2.5 text-emerald-400" />
-              +880 1234 567890
+              {sitePhone}
             </span>
             <span className="hidden md:flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors cursor-pointer">
               <Globe className="w-2.5 h-2.5 text-emerald-400" />
@@ -75,9 +77,13 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
           <div className="flex items-center justify-between h-12 sm:h-20 gap-4 sm:gap-8">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tighter">
-                Amar<span className="text-emerald-600">Shop</span>
-              </span>
+              {settings?.site_logo ? (
+                <img src={settings.site_logo} alt={settings.site_name} className="h-8 sm:h-12 w-auto object-contain" />
+              ) : (
+                <span className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tighter">
+                  {(settings?.site_name || "AmarShop").split(' ')[0]}<span className="text-emerald-600">{(settings?.site_name || "AmarShop").split(' ')[1] || ""}</span>
+                </span>
+              )}
             </Link>
 
             {/* Search Bar - Desktop */}
@@ -294,7 +300,7 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
             >
               <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                 <span className="text-lg font-black text-gray-900 tracking-tighter">
-                  Amar<span className="text-emerald-600">Shop</span>
+                  {(settings?.site_name || "AmarShop").split(' ')[0]}<span className="text-emerald-600">{(settings?.site_name || "AmarShop").split(' ')[1] || ""}</span>
                 </span>
                 <button 
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -329,16 +335,16 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
               <div className="flex-1 overflow-y-auto no-scrollbar p-4">
                 {activeTab === 'menu' ? (
                   <div className="space-y-0.5">
-                    {MOBILE_NAV_LINKS.map(link => (
+                    {mobileNavLinks.map((link: any, i: number) => (
                       <button
-                        key={link.name}
+                        key={i}
                         onClick={() => {
-                          navigate(link.href);
+                          navigate(link.url || link.href);
                           setIsMobileMenuOpen(false);
                         }}
                         className="flex items-center justify-between w-full py-2.5 px-2 text-xs font-bold text-gray-700 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-lg transition-all"
                       >
-                        {link.name}
+                        {link.name || link.title || link.label}
                         <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
                       </button>
                     ))}

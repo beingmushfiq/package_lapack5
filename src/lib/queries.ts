@@ -96,16 +96,6 @@ export const useReviews = () => {
   });
 };
 
-export const useMenus = () => {
-  return useQuery({
-    queryKey: ['menus'],
-    queryFn: async () => {
-      const { data } = await api.get('/menus');
-      return data;
-    },
-  });
-};
-
 export const usePaymentMethods = () => {
   return useQuery({
     queryKey: ['paymentMethods'],
@@ -145,8 +135,8 @@ export const useCMSHomepage = () => {
       const { data } = await api.get('/cms/homepage');
       return data;
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 10 * 60 * 1000,
+    staleTime: 30 * 1000, // Cache for 30 seconds (better for live editing)
+    gcTime: 5 * 60 * 1000,
   });
 };
 
@@ -158,8 +148,8 @@ export const useCMSPage = (slug: string) => {
       return data;
     },
     enabled: !!slug,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };
 
@@ -170,7 +160,24 @@ export const useCMSSectionTypes = () => {
       const { data } = await api.get('/cms/section-types');
       return data;
     },
-    staleTime: 30 * 60 * 1000, // Cache for 30 minutes (rarely changes)
+    staleTime: 30 * 60 * 1000,
+  });
+};
+
+export const useMenus = () => {
+  return useQuery({
+    queryKey: ['menus'],
+    queryFn: async () => {
+      const { data } = await api.get('/menus');
+      // Map menus by location for easier access: { [location]: items[] }
+      const mapped: Record<string, any[]> = {};
+      data.forEach((menu: any) => {
+        if (menu.location) {
+          mapped[menu.location] = menu.items || [];
+        }
+      });
+      return mapped;
+    },
   });
 };
 

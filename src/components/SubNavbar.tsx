@@ -3,20 +3,25 @@ import { cn } from "../lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import CategoryDropdown from "./CategoryDropdown";
-
-const NAV_LINKS = [
-  { name: "Home", href: "/" },
-  { name: "Flash Deal", href: "/flash-deal" },
-  { name: "All Products", href: "/allproducts" },
-  { name: "Seller Shop", href: "/seller-shop" },
-  { name: "Compare", href: "/compare" },
-  { name: "Blogs", href: "/blogs" },
-  { name: "Contact Us", href: "/contact" },
-];
+import { useMenus, useSiteSettings } from "../lib/queries";
 
 export default function SubNavbar({ onCategoriesClick }: { onCategoriesClick?: () => void }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { data: menus } = useMenus();
+  const { data: settings } = useSiteSettings();
   const location = useLocation();
+  
+  const navLinks = menus?.sub_navbar || [
+    { name: "Home", url: "/" },
+    { name: "Flash Deal", url: "/flash-deal" },
+    { name: "All Products", url: "/allproducts" },
+    { name: "Seller Shop", url: "/seller-shop" },
+    { name: "Compare", url: "/compare" },
+    { name: "Blogs", url: "/blogs" },
+    { name: "Contact Us", url: "/contact" },
+  ];
+
+  const siteEmail = settings?.site_email || "info@kartly.com";
   const isHome = location.pathname === '/';
 
   return (
@@ -55,13 +60,13 @@ export default function SubNavbar({ onCategoriesClick }: { onCategoriesClick?: (
 
           {/* Center: Page Navigation Bar */}
           <div className="flex items-center gap-4 lg:gap-6 flex-1 px-4 lg:px-8 overflow-x-auto no-scrollbar">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link: any, i: number) => (
               <Link
-                key={link.name}
-                to={link.href}
+                key={i}
+                to={link.url || link.href}
                 className="text-[10px] lg:text-[11px] font-bold text-gray-700 uppercase tracking-wider hover:text-[#0056b3] transition-colors whitespace-nowrap"
               >
-                {link.name}
+                {link.name || link.title || link.label}
               </Link>
             ))}
           </div>
@@ -69,7 +74,7 @@ export default function SubNavbar({ onCategoriesClick }: { onCategoriesClick?: (
           {/* Right: Email Info */}
           <div className="hidden lg:flex items-center gap-2 text-[11px] font-bold text-gray-600">
             <Mail className="w-4 h-4 text-gray-400" />
-            <span>info@kartly.com</span>
+            <span>{siteEmail}</span>
           </div>
         </div>
       </div>

@@ -5,13 +5,17 @@ import App from './App.tsx';
 import { AuthProvider } from './lib/AuthContext';
 import './index.css';
 
+import { LayoutProvider } from './lib/LayoutContext';
+
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <App />
+        <LayoutProvider>
+          <App />
+        </LayoutProvider>
       </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
