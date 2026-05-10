@@ -14,6 +14,7 @@ AmarShop features a powerful, component-driven CMS engine that decouples the UI 
 - **Layouts**: Global shells that control Header/Footer visibility, container widths, and custom CSS variables per page.
 - **Section Renderer**: Handles dynamic rendering, error boundaries, and skeleton loaders for each CMS block.
 - **Style & Visibility Engines**: Control block-level CSS overrides and role-based visibility (e.g., "Guest Only" banners).
+- **Theme Settings**: A centralized design system management interface for controlling brand colors, typography, and spacing globally.
 
 ---
 
@@ -117,6 +118,31 @@ npm run dev
 
 ---
 
+## 🛡️ Admin Panel (Filament)
+
+Access: `http://localhost:8000/admin`
+
+### Key Resources
+
+- **Pages** — Visual Page Builder with draggable sections and advanced visibility/animation controls.
+- **Theme Settings** — **[NEW]** Centralized Design System interface for managing brand colors, fonts, and UI tokens with live preview.
+- **Activity Logs** — **[NEW]** Comprehensive audit trail with detailed "Old vs New" property change tracking.
+- **Tracking Scripts** — Dynamic injection of Meta Pixel, GTM, and custom marketing scripts.
+- **Products & Orders** — Full lifecycle management for e-commerce operations.
+- **Layouts** — Global page shells and style overrides.
+
+---
+
+## 🎨 Design System & UI/UX
+
+AmarShop uses a "Luxury Editorial" aesthetic defined by:
+- **High White Space**: Generous padding and margin scales.
+- **Modern Typography**: Inter and Outfit families for a premium feel.
+- **Dynamic Animations**: Framer Motion integration for smooth CMS section transitions.
+- **Glassmorphism**: Subtle blurs and translucent surfaces in the admin panel and storefront.
+
+---
+
 ## 🔌 API Endpoints
 
 ### CMS & Frontend Endpoints
@@ -128,41 +154,6 @@ npm run dev
 | GET    | `/settings`             | Site-wide settings       |
 | GET    | `/categories`           | Hierarchical categories  |
 | GET    | `/products`             | Products (filterable)    |
-
----
-
-## 🛡️ Admin Panel (Filament)
-
-Access: `http://localhost:8000/admin`
-
-### Available Resources
-
-- **Pages** — Visual Page Builder with draggable sections
-- **Layouts** — Global page shells and style overrides
-- **Products** — Full CRUD with variations & inventory
-- **Categories** — Hierarchical structure with icons
-- **Orders** — Full lifecycle management & courier integration
-- **Tracking Scripts** — Dynamic injection of Meta Pixel, GTM, etc.
-- **Activity Logs** — Complete audit trail of admin actions
-
----
-
-## 🎨 Frontend Features
-
-- **Dynamic CMS Renderer**: 0% hardcoded homepage/custom pages
-- **Category Dropdown**: Premium hover-based flyout with sub-categories
-- **Mobile-first design**: Bottom navigation and touch-optimized UI
-- **Real-time Tracking**: Integrated order status tracking
-- **Performance**: Lazy-loaded CMS sections with skeleton fallbacks
-- **Tracking**: Pre-integrated Facebook Pixel and GTM event tracking
-
-### Roles
-
-| Role          | Access                                    |
-|---------------|-------------------------------------------|
-| Super Admin   | Full access to all resources               |
-| Editor        | Content management (blogs, FAQs, reviews)  |
-| Manager       | Products, orders, and inventory            |
 
 ---
 
@@ -194,63 +185,18 @@ MAIL_FROM_NAME="AmarShop"
 
 ---
 
-## 📦 File Storage
+## 🔍 SEO & Tracking
 
-### Local Development
-
-Files are stored in `backend/storage/app/public`. Run:
-
-```bash
-cd backend
-php artisan storage:link
-```
-
-### Production (S3)
-
-In `backend/.env`:
-
-```env
-FILESYSTEM_DISK=s3
-AWS_ACCESS_KEY_ID=your-key
-AWS_SECRET_ACCESS_KEY=your-secret
-AWS_DEFAULT_REGION=ap-southeast-1
-AWS_BUCKET=amarshop-assets
-```
-
----
-
-## 🔍 SEO Features
-
-- **JSON-LD Structured Data** on every page:
-  - `Organization` schema (site-wide)
-  - `WebSite` schema with search action
-  - `Product` schema on product detail pages
-  - `BreadcrumbList` schema for navigation
-- **Meta Pixel / Tracking Scripts**: Injected dynamically from CMS settings (`tracking_scripts` key)
-- **Semantic HTML**: Proper heading hierarchy, semantic elements throughout
-
----
-
-## 🎨 Frontend Features
-
-- **Mobile-first responsive design** with bottom navigation
-- **Dynamic product grids** with collection-based filtering
-- **Real-time cart & wishlist** with localStorage persistence
-- **Purchase flow** with shipping zones and payment method selection
-- **Auth system** with login/register modals (Sanctum tokens)
-- **Order tracking** by order number
-- **Blog section** with rich content rendering
-- **Client testimonials** with video support
-- **Newsletter subscription**
-- **Contact form** with admin email notifications
-- **Smooth animations** via Framer Motion
+- **JSON-LD Structured Data**: Automated schema injection for Organization, Product, and Breadcrumbs.
+- **Meta Pixel**: Integrated via the CMS Tracking Scripts resource.
+- **Performance**: Optimized images and lazy-loaded CMS blocks to ensure high Core Web Vitals.
+- **Dynamic Meta Tags**: Managed per-page via the Page Builder SEO tab.
 
 ---
 
 ## 🚀 Production Deployment
 
 ### Backend
-
 ```bash
 cd backend
 composer install --optimize-autoloader --no-dev
@@ -261,22 +207,10 @@ php artisan migrate --force
 ```
 
 ### Frontend
-
 ```bash
 npm run build
-# Deploy dist/ folder to your hosting (Vercel, Netlify, S3, etc.)
+# Deploy dist/ folder to your hosting
 ```
-
-### Environment Checklist
-
-- [ ] `APP_ENV=production`, `APP_DEBUG=false`
-- [ ] `APP_URL` set to your production domain
-- [ ] Database credentials configured
-- [ ] Mail driver set to SMTP with real credentials
-- [ ] `FILESYSTEM_DISK=s3` if using cloud storage
-- [ ] `FRONTEND_URL` set for CORS
-- [ ] Run `php artisan storage:link` on server
-- [ ] Set up queue worker: `php artisan queue:work`
 
 ---
 

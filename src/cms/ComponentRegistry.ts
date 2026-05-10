@@ -8,15 +8,7 @@ import { lazy, type ComponentType } from 'react';
 import type { CMSSectionProps, CMSSectionType } from './types';
 
 // ─── Existing Feature Sections (wrapped) ─────────────────────
-const HeroBannerSection = lazy(() => import('./sections/HeroBannerSection'));
-const CategoryGridSection = lazy(() => import('./sections/CategoryGridSection'));
-const CategorySidebarSection = lazy(() => import('./sections/CategorySidebarSection'));
 const ProductGridSection = lazy(() => import('./sections/ProductGridSection'));
-const BlogGridSection = lazy(() => import('./sections/BlogGridSection'));
-const BrandsCarouselSection = lazy(() => import('./sections/BrandsCarouselSection'));
-const ReviewsSection = lazy(() => import('./sections/ReviewsSection'));
-const FAQAccordionSection = lazy(() => import('./sections/FAQAccordionSection'));
-const NewsletterSection = lazy(() => import('./sections/NewsletterSection'));
 
 // ─── New CMS Sections ─────────────────────────────────────────
 const CountdownTimerSection = lazy(() => import('./sections/CountdownTimerSection'));
@@ -48,16 +40,8 @@ const FallbackSection = lazy(() => import('./components/FallbackSection'));
  */
 const registry: Record<string, ComponentType<CMSSectionProps>> = {
   // ── Existing sections
-  hero_slider: HeroBannerSection,
-  category_grid: CategoryGridSection,
-  category_sidebar: CategorySidebarSection,
   product_grid: ProductGridSection,
   product_carousel: ProductGridSection,   // reuses grid in carousel mode
-  blog_grid: BlogGridSection,
-  brands_carousel: BrandsCarouselSection,
-  reviews: ReviewsSection,
-  faq_accordion: FAQAccordionSection,
-  newsletter: NewsletterSection,
 
   // ── Generic CMS components
   promotional_banner: ImageBanner,
@@ -78,7 +62,6 @@ const registry: Record<string, ComponentType<CMSSectionProps>> = {
   product_recommendation: ProductRecommendationSection,
 
   // ── Aliases (for flexibility)
-  accordion_section: FAQAccordionSection,  // reuse FAQ accordion
   html_embed: CustomHTML,                  // alias for custom_html
 };
 

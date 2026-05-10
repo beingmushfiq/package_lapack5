@@ -17,11 +17,6 @@ import Home from "./pages/Home";
 import AllProducts from "./pages/AllProducts";
 import ProductDetails from "./pages/ProductDetails";
 import TrackOrder from "./pages/TrackOrder";
-import HelpCenter from "./pages/HelpCenter";
-import FlashDeal from "./pages/FlashDeal";
-import SellerShop from "./pages/SellerShop";
-import Compare from "./pages/Compare";
-import Blogs from "./pages/Blogs";
 import ContactUs from "./pages/ContactUs";
 import OrderHistory from "./pages/OrderHistory";
 import DynamicPage from "./pages/DynamicPage";
@@ -232,11 +227,6 @@ export default function App() {
           <Route path="/productdetails/:productName" element={<ProductDetails onAddToCart={handleAddToCart} onOrderNow={handleOrderNow} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} />} />
           <Route path="/products" element={<AllProducts onAddToCart={handleAddToCart} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} />} />
           <Route path="/track-order" element={<TrackOrder />} />
-          <Route path="/help-center" element={<HelpCenter />} />
-          <Route path="/flash-deal" element={<FlashDeal onAddToCart={handleAddToCart} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} />} />
-          <Route path="/seller-shop" element={<SellerShop />} />
-          <Route path="/compare" element={<Compare />} />
-          <Route path="/blogs" element={<Blogs />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/order-history" element={<OrderHistory />} />
           {/* CMS Dynamic Pages — catch-all route for CMS-managed pages */}
