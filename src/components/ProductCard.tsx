@@ -12,16 +12,19 @@ interface ProductCardProps {
   onToggleWishlist?: (product: any) => void;
   isWishlisted?: boolean;
   layout?: 'grid' | 'list';
+  onOrderNow?: (product: any) => void;
 }
 
-export default function ProductCard({ product, onAddToCart, onToggleWishlist, isWishlisted, layout = 'grid' }: ProductCardProps) {
+export default function ProductCard({ product, onAddToCart, onToggleWishlist, onOrderNow, isWishlisted, layout = 'grid' }: ProductCardProps) {
   const navigate = useNavigate();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const slug = product.slug || product.name?.toLowerCase().replace(/ /g, '-');
+  const productUrl = `/productdetails/${slug}`;
+
   const handleProductClick = () => {
-    const slug = product.slug || product.name.toLowerCase().replace(/ /g, '-');
-    navigate(`/productdetails/${slug}`);
+    navigate(productUrl);
   };
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -152,9 +155,9 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
   return (
     <motion.div
       whileHover={{ y: -4 }}
-      onClick={handleProductClick}
-      className="group bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-2xl shadow-sm cursor-pointer h-full flex flex-col"
+      className="group bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-2xl shadow-sm h-full flex flex-col"
     >
+      <div className="relative cursor-pointer" onClick={handleProductClick}>
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         <img
@@ -228,12 +231,20 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
               <ShoppingCart className="w-4 h-4" />
             </button>
             <button 
-              onClick={(e) => { e.stopPropagation(); handleProductClick(); }}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (onOrderNow) {
+                  onOrderNow(product);
+                } else {
+                  handleProductClick();
+                }
+              }}
               className="flex-1 rounded-xl bg-gray-900 text-white font-black text-[9px] sm:text-[10px] uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200"
             >
               Order Now
             </button>
           </div>
+        </div>
         </div>
       </div>
 

@@ -40,7 +40,11 @@ export default function ProductDetails({
   const { data: relatedResponse } = useProducts(product?.category?.slug);
   const relatedProducts = relatedResponse?.data || [];
 
-  const images = product ? (product.images?.length > 0 ? product.images : [product.image || "https://picsum.photos/seed/p1/600/800", "https://picsum.photos/seed/p2/600/800", "https://picsum.photos/seed/p3/600/800"]) : [];
+  const rawImages = product ? (product.images?.length > 0 ? product.images : [product.image]) : [];
+  const images = rawImages.map((img: any) => {
+    const path = typeof img === 'string' ? img : (img?.image_url || img);
+    return getImageUrl(path);
+  }).filter(Boolean);
 
   useEffect(() => {
     if (product) {

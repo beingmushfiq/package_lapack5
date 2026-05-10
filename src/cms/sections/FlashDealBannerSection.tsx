@@ -4,10 +4,12 @@ import { Zap } from 'lucide-react';
 import type { CMSSectionProps } from '../types';
 import { useProducts } from '../../lib/queries';
 import { getImageUrl } from '../../lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
 
 export default function FlashDealBannerSection({ section, onAddToCart, onToggleWishlist, wishlistItems }: CMSSectionProps) {
+  const navigate = useNavigate();
   const cfg = section.components ?? {};
   const title = cfg.title ?? 'Flash Deal';
   const targetDate = cfg.target_date ?? new Date(Date.now() + 8 * 3600000).toISOString();
@@ -55,9 +57,16 @@ export default function FlashDealBannerSection({ section, onAddToCart, onToggleW
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {products.map((product: any) => (
-            <div key={product.id} className="group bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-              <div className="aspect-square bg-gray-50 relative overflow-hidden">
+          {products.map((product: any) => {
+            const slug = product.slug || product.name?.toLowerCase().replace(/ /g, '-');
+            const productUrl = `/productdetails/${slug}`;
+            
+            return (
+              <div key={product.id} className="group bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                <div 
+                  className="aspect-square bg-gray-50 relative overflow-hidden cursor-pointer"
+                  onClick={() => navigate(productUrl)}
+                >
                 {product.discount_price && (
                   <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-lg z-10">
                     -{Math.round((1 - product.discount_price / product.price) * 100)}%
@@ -68,8 +77,13 @@ export default function FlashDealBannerSection({ section, onAddToCart, onToggleW
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <div className="p-2">
-                <p className="text-xs text-gray-700 font-medium line-clamp-2 leading-snug">{product.name}</p>
+                <div className="p-2">
+                  <p 
+                    className="text-xs text-gray-700 font-medium line-clamp-2 leading-snug cursor-pointer hover:text-emerald-600 transition-colors"
+                    onClick={() => navigate(productUrl)}
+                  >
+                    {product.name}
+                  </p>
                 <div className="flex items-center gap-1 mt-1">
                   <span className="text-sm font-black text-emerald-600">৳{product.discount_price ?? product.price}</span>
                   {product.discount_price && (
@@ -79,10 +93,11 @@ export default function FlashDealBannerSection({ section, onAddToCart, onToggleW
                 <button onClick={() => onAddToCart?.(product)}
                   className="mt-2 w-full py-1.5 bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-600 text-xs font-semibold rounded-lg transition-colors">
                   Add to Cart
-                </button>
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
