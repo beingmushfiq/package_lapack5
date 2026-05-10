@@ -33,10 +33,23 @@ Route::prefix('v1')->group(function () {
     
     // CMS Page Builder Routes
     Route::prefix('cms')->group(function () {
+        // Page Builder
         Route::get('/homepage', [\App\Http\Controllers\Api\PageBuilderController::class, 'homepage']);
         Route::get('/pages/{slug}', [\App\Http\Controllers\Api\PageBuilderController::class, 'show']);
         Route::get('/layouts', [\App\Http\Controllers\Api\PageBuilderController::class, 'layouts']);
         Route::get('/section-types', [\App\Http\Controllers\Api\PageBuilderController::class, 'sectionTypes']);
+
+        // Global CMS Config (new)
+        Route::get('/theme', [\App\Http\Controllers\Api\CmsController::class, 'theme']);
+        Route::get('/navigation', [\App\Http\Controllers\Api\CmsController::class, 'navigation']);
+        Route::get('/menus', [\App\Http\Controllers\Api\CmsController::class, 'menus']);
+        Route::get('/footer', [\App\Http\Controllers\Api\CmsController::class, 'footer']);
+        Route::get('/popups', [\App\Http\Controllers\Api\CmsController::class, 'popups']);
+        Route::get('/announcement-bar', [\App\Http\Controllers\Api\CmsController::class, 'announcementBars']);
+        Route::get('/tracking-scripts', [\App\Http\Controllers\Api\CmsController::class, 'trackingScripts']);
+
+        // Cache management (protected)
+        Route::middleware('auth:sanctum')->post('/cache/clear', [\App\Http\Controllers\Api\CmsController::class, 'clearCache']);
     });
     
     // Webhooks

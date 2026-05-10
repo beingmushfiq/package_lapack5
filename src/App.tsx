@@ -33,7 +33,11 @@ import { useSiteSettings } from "./lib/queries";
 import { Toaster, toast } from "react-hot-toast";
 import { OrganizationSchema, WebSiteSchema } from "./components/StructuredData";
 import { initTrackingScripts, trackFBEvent, trackGTMEvent } from "./lib/tracking";
+import { initTrackingEngine } from "./lib/TrackingEngine";
 import { useLayout } from "./lib/LayoutContext";
+import { initThemeEngine } from "./lib/ThemeEngine";
+import AnnouncementBar from "./components/AnnouncementBar";
+import PopupManager from "./components/PopupManager";
 
 export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -58,6 +62,12 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
   }, [wishlistItems]);
+
+  // Engines — init on mount
+  useEffect(() => {
+    initThemeEngine();
+    initTrackingEngine();
+  }, []);
 
   // Tracking Scripts Injection
   useEffect(() => {
@@ -192,6 +202,9 @@ export default function App() {
           shadow={true}
         />
         
+        {/* CMS Announcement Bar — above everything */}
+        <AnnouncementBar />
+
         {layout.showHeader && (
           <Navbar 
             onCartClick={() => setIsCartOpen(true)} 
@@ -272,6 +285,8 @@ export default function App() {
           onClose={() => setIsAuthModalOpen(false)}
           defaultMode={authMode}
         />
+        {/* CMS-driven popups */}
+        <PopupManager />
         <Toaster position="top-right" />
       </div>
     </BrowserRouter>

@@ -10,7 +10,7 @@ export const useProducts = (categorySlug?: string, search?: string, collection?:
       if (search) params.append('search', search);
       if (collection) params.append('collection', collection);
       const { data } = await api.get(`/products?${params.toString()}`);
-      return data; // returning the whole response to handle pagination in component
+      return data;
     },
   });
 };
@@ -53,6 +53,7 @@ export const useSiteSettings = () => {
       const { data } = await api.get('/settings');
       return data;
     },
+    staleTime: 5 * 60 * 1000,
   });
 };
 
@@ -71,7 +72,7 @@ export const useBlogs = () => {
     queryKey: ['blogs'],
     queryFn: async () => {
       const { data } = await api.get('/blogs');
-      return data.data; // assuming paginated
+      return data.data;
     },
   });
 };
@@ -135,7 +136,7 @@ export const useCMSHomepage = () => {
       const { data } = await api.get('/cms/homepage');
       return data;
     },
-    staleTime: 30 * 1000, // Cache for 30 seconds (better for live editing)
+    staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
   });
 };
@@ -164,14 +165,97 @@ export const useCMSSectionTypes = () => {
   });
 };
 
+// ─── NEW: Global CMS Config Queries ─────────────────────────
+
+export const useCMSTheme = () => {
+  return useQuery({
+    queryKey: ['cms', 'theme'],
+    queryFn: async () => {
+      const { data } = await api.get('/cms/theme');
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,   // 5 minutes — theme rarely changes
+    gcTime: 30 * 60 * 1000,
+  });
+};
+
+export const useCMSNavigation = (location: string = 'primary') => {
+  return useQuery({
+    queryKey: ['cms', 'navigation', location],
+    queryFn: async () => {
+      const { data } = await api.get(`/cms/navigation?location=${location}`);
+      return data;
+    },
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+};
+
+export const useCMSMenus = () => {
+  return useQuery({
+    queryKey: ['cms', 'menus'],
+    queryFn: async () => {
+      const { data } = await api.get('/cms/menus');
+      return data;
+    },
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+};
+
+export const useCMSFooter = () => {
+  return useQuery({
+    queryKey: ['cms', 'footer'],
+    queryFn: async () => {
+      const { data } = await api.get('/cms/footer');
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+};
+
+export const useCMSPopups = () => {
+  return useQuery({
+    queryKey: ['cms', 'popups'],
+    queryFn: async () => {
+      const { data } = await api.get('/cms/popups');
+      return data;
+    },
+    staleTime: 60 * 1000,
+  });
+};
+
+export const useCMSAnnouncementBars = () => {
+  return useQuery({
+    queryKey: ['cms', 'announcementBars'],
+    queryFn: async () => {
+      const { data } = await api.get('/cms/announcement-bar');
+      return data;
+    },
+    staleTime: 60 * 1000,
+  });
+};
+
+export const useCMSTrackingScripts = () => {
+  return useQuery({
+    queryKey: ['cms', 'trackingScripts'],
+    queryFn: async () => {
+      const { data } = await api.get('/cms/tracking-scripts');
+      return data;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+};
+
+// Legacy menus query (now maps to CMS menus)
 export const useMenus = () => {
   return useQuery({
     queryKey: ['menus'],
     queryFn: async () => {
-      const { data } = await api.get('/menus');
-      // Map menus by location for easier access: { [location]: items[] }
+      const { data } = await api.get('/cms/menus');
       const mapped: Record<string, any[]> = {};
-      data.forEach((menu: any) => {
+      Object.values(data).forEach((menu: any) => {
         if (menu.location) {
           mapped[menu.location] = menu.items || [];
         }
@@ -180,4 +264,3 @@ export const useMenus = () => {
     },
   });
 };
-

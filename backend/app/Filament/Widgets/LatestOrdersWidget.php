@@ -46,7 +46,7 @@ class LatestOrdersWidget extends BaseWidget
             ])
             ->actions([
                 Action::make('view')
-                    ->url(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record])),
+                    ->url(fn (Order $record): string => OrderResource::getUrl('edit', ['record' => $record])),
             ]);
     }
 }

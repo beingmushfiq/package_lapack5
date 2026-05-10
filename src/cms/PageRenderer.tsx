@@ -34,24 +34,30 @@ export default function PageRenderer({
       document.title = page.meta.title || page.title || 'AmarShop';
 
       // Meta description
-      let metaDesc = document.querySelector('meta[name="description"]');
-      if (page.meta.description) {
-        if (!metaDesc) {
-          metaDesc = document.createElement('meta');
-          metaDesc.setAttribute('name', 'description');
-          document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute('content', page.meta.description);
-      }
+      setMetaTag('name', 'description', page.meta.description || '');
+
+      // Robots
+      setMetaTag('name', 'robots', page.meta.robots || 'index, follow');
+
+      // Canonical
+      setLinkTag('canonical', page.meta.canonical_url || window.location.href.split('?')[0]);
 
       // OG Tags
-      setOGTag('og:title', page.meta.title || page.title);
-      setOGTag('og:description', page.meta.description || '');
+      setMetaTag('property', 'og:title', page.meta.title || page.title);
+      setMetaTag('property', 'og:description', page.meta.description || '');
       if (page.meta.og_image) {
-        setOGTag('og:image', page.meta.og_image);
+        setMetaTag('property', 'og:image', page.meta.og_image);
       }
-      setOGTag('og:type', 'website');
-      setOGTag('og:url', window.location.href);
+      setMetaTag('property', 'og:type', 'website');
+      setMetaTag('property', 'og:url', window.location.href);
+
+      // Twitter Cards
+      setMetaTag('name', 'twitter:card', 'summary_large_image');
+      setMetaTag('name', 'twitter:title', page.meta.title || page.title);
+      setMetaTag('name', 'twitter:description', page.meta.description || '');
+      if (page.meta.og_image) {
+        setMetaTag('name', 'twitter:image', page.meta.og_image);
+      }
 
       // JSON-LD Structured Data
       if (page.meta.json_ld) {
@@ -62,7 +68,9 @@ export default function PageRenderer({
           existingLd.setAttribute('type', 'application/ld+json');
           document.head.appendChild(existingLd);
         }
-        existingLd.textContent = JSON.stringify(page.meta.json_ld);
+        existingLd.textContent = typeof page.meta.json_ld === 'string' 
+          ? page.meta.json_ld 
+          : JSON.stringify(page.meta.json_ld);
       }
     }
 
@@ -91,7 +99,6 @@ export default function PageRenderer({
   }, [page.layout, setLayout, resetLayout]);
 
   // ─── Layout-level styles ──────────────────────────────────
-  const containerWidth = page.layout?.container_width || '1440px';
   const globalStyles = page.layout?.global_styles || {};
 
   // Sort sections by order
@@ -122,13 +129,23 @@ export default function PageRenderer({
   );
 }
 
-// ─── Utility: set/create OG meta tag ─────────────────────────
-function setOGTag(property: string, content: string) {
-  let tag = document.querySelector(`meta[property="${property}"]`);
+// ─── Utilities: Meta/Link injection ─────────────────────────
+function setMetaTag(attr: 'name' | 'property', value: string, content: string) {
+  let tag = document.querySelector(`meta[${attr}="${value}"]`);
   if (!tag) {
     tag = document.createElement('meta');
-    tag.setAttribute('property', property);
+    tag.setAttribute(attr, value);
     document.head.appendChild(tag);
   }
   tag.setAttribute('content', content);
+}
+
+function setLinkTag(rel: string, href: string) {
+  let tag = document.querySelector(`link[rel="${rel}"]`);
+  if (!tag) {
+    tag = document.createElement('link');
+    tag.setAttribute('rel', rel);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('href', href);
 }

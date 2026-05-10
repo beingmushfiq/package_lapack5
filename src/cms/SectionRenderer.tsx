@@ -1,12 +1,15 @@
 // ============================================================
-// Section Renderer
-// Takes a single CMS section and renders the correct component.
-// Handles: lazy loading, error boundaries, visibility, and styling.
+// Section Renderer v2
+// Handles: lazy loading, error boundaries, visibility,
+// animations (motion), responsive breakpoint visibility, styling.
 // ============================================================
 
-import React, { Suspense, Component, type ReactNode } from 'react';
+import React, { Suspense, type ReactNode } from 'react';
+import { motion } from 'motion/react';
 import { getComponent } from './ComponentRegistry';
 import { shouldRender } from './VisibilityEngine';
+import { isVisibleOnBreakpoint } from './StyleEngine';
+import { getSectionMotionProps } from '../lib/AnimationEngine';
 import { useAuth } from '../lib/AuthContext';
 import type { CMSSection, CMSSectionProps } from './types';
 
@@ -61,7 +64,7 @@ function SectionSkeleton() {
 // ─── Section Error Fallback ──────────────────────────────────
 
 function SectionErrorFallback({ sectionId }: { sectionId: string | number }) {
-  // @ts-ignore - Vite env
+  // @ts-ignore
   const isDev = import.meta.env?.DEV;
   if (!isDev) return null;
 
@@ -95,20 +98,25 @@ export default function SectionRenderer({
 }: SectionRendererProps) {
   const { user } = useAuth();
 
-  // Check visibility rules
+  // ── Auth / role / device visibility check
   const isVisible = shouldRender(
     section.visibility_rules,
     !!user,
-    // @ts-ignore - role might exist on user
+    // @ts-ignore
     user?.role
   );
-
   if (!isVisible) return null;
 
-  // Get the component from registry
+  // ── Responsive breakpoint visibility check (hideOnMobile etc.)
+  if (!isVisibleOnBreakpoint(section.styles as any)) return null;
+
+  // ── Resolve animation props
+  const motionProps = getSectionMotionProps(section.animation_config);
+  const hasAnimation = Object.keys(motionProps).length > 0;
+
+  // ── Get the component from registry
   const SectionComponent = getComponent(section.type);
 
-  // Build props
   const props: CMSSectionProps = {
     section,
     onAddToCart,
@@ -118,7 +126,11 @@ export default function SectionRenderer({
     onCategorySeeMore,
   };
 
-  return (
+  // ── Wrapper attributes
+  const wrapperAttrs: Record<string, any> = {};
+  if (section.css_id) wrapperAttrs.id = section.css_id;
+
+  const inner = (
     <SectionErrorBoundary
       sectionId={section.id}
       fallback={<SectionErrorFallback sectionId={section.id} />}
@@ -128,4 +140,19 @@ export default function SectionRenderer({
       </Suspense>
     </SectionErrorBoundary>
   );
+
+  // ── Wrap with motion if animation config present
+  if (hasAnimation) {
+    return (
+      <motion.div {...wrapperAttrs} {...motionProps}>
+        {inner}
+      </motion.div>
+    );
+  }
+
+  if (Object.keys(wrapperAttrs).length > 0) {
+    return <div {...wrapperAttrs}>{inner}</div>;
+  }
+
+  return inner;
 }

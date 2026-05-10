@@ -169,6 +169,38 @@ class PageForm
                                                     ->defaultItems(0),
                                             ]),
 
+                                        // Animation Config (JSON)
+                                        Section::make('Animation')
+                                            ->collapsed()
+                                            ->schema([
+                                                KeyValue::make('animation_config')
+                                                    ->label('Motion Settings')
+                                                    ->columnSpanFull()
+                                                    ->keyLabel('Property (type, duration, delay)')
+                                                    ->valueLabel('Value'),
+                                            ]),
+
+                                        // Tracking Config (JSON)
+                                        Section::make('Tracking')
+                                            ->collapsed()
+                                            ->schema([
+                                                KeyValue::make('tracking_config')
+                                                    ->label('Event Settings')
+                                                    ->columnSpanFull()
+                                                    ->keyLabel('Key (eventName, fbPixelEvent)')
+                                                    ->valueLabel('Value'),
+                                            ]),
+
+                                        // Scheduling
+                                        Section::make('Scheduling')
+                                            ->collapsed()
+                                            ->schema([
+                                                Grid::make(2)->schema([
+                                                    DateTimePicker::make('schedule_start'),
+                                                    DateTimePicker::make('schedule_end'),
+                                                ]),
+                                            ]),
+
                                         // API Source (JSON)
                                         Section::make('API Data Source')
                                             ->description('Bind this section to an external API')

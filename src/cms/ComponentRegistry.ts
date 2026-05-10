@@ -1,14 +1,13 @@
 // ============================================================
-// Component Registry
+// Component Registry v2
 // Maps CMS section type strings to React components.
-// This is the central registration point for all renderable types.
-// New section types can be added here without modifying any other code.
+// All new section types are registered here.
 // ============================================================
 
 import { lazy, type ComponentType } from 'react';
 import type { CMSSectionProps, CMSSectionType } from './types';
 
-// Lazy-loaded existing components (wrapped for CMS)
+// ─── Existing Feature Sections (wrapped) ─────────────────────
 const HeroBannerSection = lazy(() => import('./sections/HeroBannerSection'));
 const CategoryGridSection = lazy(() => import('./sections/CategoryGridSection'));
 const CategorySidebarSection = lazy(() => import('./sections/CategorySidebarSection'));
@@ -19,7 +18,15 @@ const ReviewsSection = lazy(() => import('./sections/ReviewsSection'));
 const FAQAccordionSection = lazy(() => import('./sections/FAQAccordionSection'));
 const NewsletterSection = lazy(() => import('./sections/NewsletterSection'));
 
-// Lazy-loaded new CMS components
+// ─── New CMS Sections ─────────────────────────────────────────
+const CountdownTimerSection = lazy(() => import('./sections/CountdownTimerSection'));
+const CTASection = lazy(() => import('./sections/CTASection'));
+const TestimonialSliderSection = lazy(() => import('./sections/TestimonialSliderSection'));
+const FlashDealBannerSection = lazy(() => import('./sections/FlashDealBannerSection'));
+const ImageGallerySection = lazy(() => import('./sections/ImageGallerySection'));
+const ProductRecommendationSection = lazy(() => import('./sections/ProductRecommendationSection'));
+
+// ─── Generic CMS Components ───────────────────────────────────
 const RichTextBlock = lazy(() => import('./components/RichTextBlock'));
 const ImageBanner = lazy(() => import('./components/ImageBanner'));
 const VideoEmbed = lazy(() => import('./components/VideoEmbed'));
@@ -31,26 +38,28 @@ const FallbackSection = lazy(() => import('./components/FallbackSection'));
 
 /**
  * The Component Registry: maps CMS type strings → lazy-loaded React components.
- * 
+ *
  * To add a new section type:
  * 1. Create the component in src/cms/sections/ or src/cms/components/
  * 2. Add a lazy import above
  * 3. Register it in this map
+ * 4. Add the type to CMSSectionType in types.ts
+ * 5. Add it to PageSection::SECTION_TYPES in the backend
  */
 const registry: Record<string, ComponentType<CMSSectionProps>> = {
-  // Existing feature sections (wrapped)
+  // ── Existing sections
   hero_slider: HeroBannerSection,
   category_grid: CategoryGridSection,
   category_sidebar: CategorySidebarSection,
   product_grid: ProductGridSection,
-  product_carousel: ProductGridSection, // reuses product grid with carousel mode
+  product_carousel: ProductGridSection,   // reuses grid in carousel mode
   blog_grid: BlogGridSection,
   brands_carousel: BrandsCarouselSection,
   reviews: ReviewsSection,
   faq_accordion: FAQAccordionSection,
   newsletter: NewsletterSection,
 
-  // New generic CMS components
+  // ── Generic CMS components
   promotional_banner: ImageBanner,
   dual_banner: DualBanner,
   rich_text: RichTextBlock,
@@ -59,6 +68,18 @@ const registry: Record<string, ComponentType<CMSSectionProps>> = {
   spacer: Spacer,
   custom_html: CustomHTML,
   contact_form: ContactForm,
+
+  // ── New CMS sections
+  countdown_timer: CountdownTimerSection,
+  cta_section: CTASection,
+  testimonial_slider: TestimonialSliderSection,
+  flash_deal_banner: FlashDealBannerSection,
+  image_gallery: ImageGallerySection,
+  product_recommendation: ProductRecommendationSection,
+
+  // ── Aliases (for flexibility)
+  accordion_section: FAQAccordionSection,  // reuse FAQ accordion
+  html_embed: CustomHTML,                  // alias for custom_html
 };
 
 /**
@@ -71,7 +92,7 @@ export function getComponent(type: CMSSectionType | string): ComponentType<CMSSe
 
 /**
  * Register a new component type at runtime.
- * Useful for plugins or A/B test variants.
+ * Used by the CMS SDK and third-party plugins.
  */
 export function registerComponent(type: string, component: ComponentType<CMSSectionProps>): void {
   registry[type] = component;
