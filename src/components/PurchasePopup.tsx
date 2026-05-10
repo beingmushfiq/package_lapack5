@@ -138,8 +138,25 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
         notes: `Pay Only Shipping: ${payOnlyShipping ? 'Yes' : 'No'}`
       };
 
-      const { data } = await api.post('/orders', orderData);
+      const { data: order } = await api.post('/orders', orderData);
       
+      // Handle Payment Gateway Redirect
+      if (selectedPaymentMethod?.code !== 'cod') {
+        try {
+          const { data: paymentResponse } = await api.post(`/orders/${order.id}/pay`, {
+            payment_method: selectedPaymentMethod?.code
+          });
+
+          if (paymentResponse.redirect_url) {
+            window.location.href = paymentResponse.redirect_url;
+            return; // Exit as we are redirecting
+          }
+        } catch (payErr) {
+          console.error('Payment initiation failed:', payErr);
+          toast.error('Order placed but payment gateway failed. Please try again from order history.');
+        }
+      }
+
       // Track Purchase
       trackFBEvent('Purchase', {
         value: total,
@@ -150,7 +167,7 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
       });
 
       trackGTMEvent('purchase', {
-        transaction_id: data.order_number || data.id,
+        transaction_id: order.order_number || order.id,
         value: total,
         currency: 'BDT',
         items: items.map(item => ({
@@ -177,7 +194,7 @@ export default function PurchasePopup({ isOpen, onClose, cartItems: initialItems
 
       // Clear cart or navigate to track order
       onClose();
-      // Optional: window.location.href = `/track-order?order_number=${data.order_number}`;
+      window.location.href = `/order-success?order=${order.order_number}`;
     } catch (err: any) {
       const message = err.response?.data?.message || 'Failed to place order. Please try again.';
       toast.error(message, {

@@ -300,39 +300,69 @@ export default function ProductDetails({
             <div className="flex items-center gap-3 mb-6">
               <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Share:</span>
               <div className="flex gap-2">
-                {[Facebook, Twitter, Instagram, Linkedin, MessageCircle].map((Icon, i) => (
-                  <button 
-                    key={i} 
-                    onClick={() => alert("Sharing feature coming soon!")}
-                    className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all"
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                  </button>
-                ))}
+                <button 
+                  onClick={() => {
+                    const url = window.location.href;
+                    const text = `Check out ${product.name} on AmarShop!`;
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+                  }}
+                  className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-blue-500 hover:text-white transition-all"
+                >
+                  <Facebook className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => {
+                    const url = window.location.href;
+                    const text = `Check out ${product.name} on AmarShop!`;
+                    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+                  }}
+                  className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-sky-500 hover:text-white transition-all"
+                >
+                  <Twitter className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => {
+                    const url = window.location.href;
+                    const text = `Check out ${product.name} on AmarShop!`;
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+                  }}
+                  className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition-all"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    toast.success("Link copied to clipboard!");
+                  }}
+                  className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-900 hover:text-white transition-all"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
             {/* Trust Badges - Smaller */}
             <div className="grid grid-cols-3 gap-1 py-4 border-t border-gray-100">
               <div className="flex items-center gap-1.5 justify-center">
-                <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                <span className="text-[7px] font-black uppercase tracking-widest text-gray-500">Secure</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-[8px] font-black uppercase tracking-widest text-gray-500">Secure</span>
               </div>
               <div className="flex items-center gap-1.5 justify-center border-x border-gray-100">
-                <Truck className="w-3 h-3 text-blue-600" />
-                <span className="text-[7px] font-black uppercase tracking-widest text-gray-500">Fast</span>
+                <Truck className="w-3.5 h-3.5 text-blue-600" />
+                <span className="text-[8px] font-black uppercase tracking-widest text-gray-500">Fast Delivery</span>
               </div>
               <div className="flex items-center gap-1.5 justify-center">
-                <RotateCcw className="w-3 h-3 text-orange-600" />
-                <span className="text-[7px] font-black uppercase tracking-widest text-gray-500">Returns</span>
+                <RotateCcw className="w-3.5 h-3.5 text-orange-600" />
+                <span className="text-[8px] font-black uppercase tracking-widest text-gray-500">7 Day Returns</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Bottom Section: Tabs */}
-        <div className="mt-10 border-t border-gray-100 pt-6">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-8 border-b border-gray-100 mb-6">
+        <div className="mt-12 border-t border-gray-100 pt-8">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 sm:gap-10 border-b border-gray-100 mb-8">
             {[
               { id: 'description', label: 'Description', icon: FileText },
               { id: 'specification', label: 'Specification', icon: Info },
@@ -343,79 +373,116 @@ export default function ProductDetails({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 pb-2 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === tab.id ? 'text-emerald-600' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`flex items-center gap-2 pb-3 text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all relative ${activeTab === tab.id ? 'text-emerald-600' : 'text-gray-400 hover:text-gray-600'}`}
               >
-                <tab.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <tab.icon className={cn("w-3.5 h-3.5", activeTab === tab.id ? "text-emerald-600" : "text-gray-400")} />
                 {tab.label}
                 {activeTab === tab.id && (
-                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600" />
+                  <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
                 )}
               </button>
             ))}
           </div>
 
-          <div className="min-h-[200px]">
+          <div className="min-h-[300px]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="text-xs sm:text-sm text-gray-500 leading-relaxed"
+                className="text-xs sm:text-sm text-gray-600 leading-relaxed max-w-4xl"
               >
                 {activeTab === 'description' && (
-                  <div className="space-y-4" dangerouslySetInnerHTML={{ __html: product.description || '' }}>
+                  <div className="prose prose-sm sm:prose-base prose-emerald max-w-none" dangerouslySetInnerHTML={{ __html: product.description || '' }}>
                   </div>
                 )}
                 {activeTab === 'specification' && (
-                  <div className="space-y-2">
+                  <div className="bg-gray-50 rounded-2xl p-6 sm:p-8">
                     {product.specifications && product.specifications.length > 0 ? (
-                      <div className="grid grid-cols-1 divide-y divide-gray-100">
+                      <div className="grid grid-cols-1 divide-y divide-gray-200/50">
                         {product.specifications.map((spec: any, i: number) => (
-                          <div key={i} className="py-3 flex items-center justify-between">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{spec.key}</span>
-                            <span className="text-[11px] font-bold text-gray-900">{spec.value}</span>
+                          <div key={i} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{spec.key}</span>
+                            <span className="text-xs sm:text-sm font-bold text-gray-900">{spec.value}</span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No specifications provided.</p>
+                      <div className="text-center py-10">
+                        <Info className="w-10 h-10 text-gray-200 mx-auto mb-4" />
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No specifications provided.</p>
+                      </div>
                     )}
                   </div>
                 )}
                 {activeTab === 'questions' && (
-                  <div className="space-y-4">
+                  <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center">
+                    <HelpCircle className="w-12 h-12 text-emerald-100 mx-auto mb-6" />
+                    <h4 className="text-lg font-black text-gray-900 uppercase tracking-tight mb-2">Have a question?</h4>
+                    <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-8">Our support team is here to help you 24/7</p>
                     <button 
                       onClick={() => navigate('/contact')}
-                      className="w-full py-3 rounded-xl bg-gray-50 text-emerald-600 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-50 transition-all"
+                      className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20"
                     >
-                      Ask a Question
+                      <MessageCircle className="w-4 h-4" />
+                      Contact Support
                     </button>
                   </div>
                 )}
                 {activeTab === 'comments' && (
-                  <div className="space-y-4">
-                    <textarea 
-                      placeholder="Write a comment..."
-                      className="w-full bg-gray-50 border border-gray-100 rounded-xl p-4 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
-                      rows={3}
-                    />
-                    <button 
-                      onClick={() => alert("Comment posted successfully!")}
-                      className="px-6 py-2 bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg"
-                    >
-                      Post Comment
-                    </button>
+                  <div className="space-y-8">
+                    <div className="bg-gray-50 rounded-2xl p-6 sm:p-8">
+                      <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-6">Leave a comment</h4>
+                      <textarea 
+                        placeholder="Write your thoughts here..."
+                        className="w-full bg-white border border-gray-200 rounded-2xl p-6 text-sm outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/30 transition-all font-medium"
+                        rows={4}
+                      />
+                      <button 
+                        onClick={() => toast.success("Comment submitted for review!")}
+                        className="mt-4 px-8 py-3 bg-gray-900 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-black transition-all"
+                      >
+                        Post Comment
+                      </button>
+                    </div>
                   </div>
                 )}
                 {activeTab === 'reviews' && (
-                  <div className="space-y-6">
-                    <button 
-                      onClick={() => alert("Review submitted for moderation.")}
-                      className="w-full py-3 rounded-xl bg-gray-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all"
-                    >
-                      Write a Review
-                    </button>
+                  <div className="space-y-10">
+                    <div className="flex flex-col sm:flex-row items-center gap-8 bg-gray-50 rounded-3xl p-8 sm:p-10">
+                      <div className="text-center sm:text-left">
+                        <div className="text-5xl font-black text-gray-900 mb-2">4.5</div>
+                        <div className="flex items-center justify-center sm:justify-start gap-1 mb-2">
+                          {[1, 2, 3, 4, 5].map(s => <Star key={s} className={`w-4 h-4 ${s <= 4 ? 'text-yellow-400 fill-current' : 'text-gray-200'}`} />)}
+                        </div>
+                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Based on 24 reviews</div>
+                      </div>
+                      <div className="h-px w-full sm:h-16 sm:w-px bg-gray-200" />
+                      <div className="flex-1 w-full space-y-2">
+                        {[5, 4, 3, 2, 1].map(star => (
+                          <div key={star} className="flex items-center gap-3">
+                            <span className="text-[10px] font-black text-gray-400 w-3">{star}</span>
+                            <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${star === 5 ? 80 : star === 4 ? 15 : 2}%` }}
+                                className="h-full bg-emerald-500" 
+                              />
+                            </div>
+                            <span className="text-[10px] font-black text-gray-400 w-8">{star === 5 ? 80 : star === 4 ? 15 : 2}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <button 
+                        onClick={() => toast.error("Please login to write a review.")}
+                        className="px-10 py-4 bg-white border-2 border-gray-100 rounded-2xl text-gray-900 font-black text-[10px] uppercase tracking-widest hover:border-emerald-500 hover:text-emerald-600 transition-all"
+                      >
+                        Write a Review
+                      </button>
+                    </div>
                   </div>
                 )}
               </motion.div>

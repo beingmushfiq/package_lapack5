@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
 import type { CMSSectionProps } from '../types';
 import { useProducts } from '../../lib/queries';
+import { getImageUrl } from '../../lib/utils';
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
 
@@ -62,7 +63,7 @@ export default function FlashDealBannerSection({ section, onAddToCart, onToggleW
                     -{Math.round((1 - product.discount_price / product.price) * 100)}%
                   </span>
                 )}
-                <img src={product.image || product.images?.[0]?.image_url || '/placeholder.png'}
+                <img src={getImageUrl(product.image || product.images?.[0]?.image_url || '/placeholder.png')}
                   alt={product.name}
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                 />

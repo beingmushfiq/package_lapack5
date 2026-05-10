@@ -14,17 +14,30 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
   const [activeTab, setActiveTab] = useState<'menu' | 'categories'>('menu');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [expandedSubCategory, setExpandedSubCategory] = useState<string | null>(null);
-  const navigate = useNavigate();
-
+    const navigate = useNavigate();
   const { data: apiCategories } = useCategories();
   const { data: menus } = useMenus();
   const { data: settings } = useSiteSettings();
 
   const categoryTree = apiCategories?.data || [];
-  const topCategories = categoryTree.slice(0, 5).map((c: any) => c.name);
-  const categories = ["All Categories", ...topCategories];
+  const topCategories = categoryTree.slice(0, 10);
+  const categoriesList = ["All Categories", ...topCategories.map((c: any) => c.name)];
 
   const sitePhone = settings?.site_phone || "+880 1234 567890";
+
+  const handleSearch = (e: React.FormEvent | React.MouseEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      const params = new URLSearchParams();
+      params.set('search', searchQuery.trim());
+      if (selectedCategory !== "All Categories") {
+        const cat = topCategories.find((c: any) => c.name === selectedCategory);
+        if (cat) params.set('category', cat.slug);
+      }
+      navigate(`/allproducts?${params.toString()}`);
+      setIsSearchFocused(false);
+    }
+  };
 
   const mobileNavLinks = menus?.header || [
     { name: "Home", url: "/" },
@@ -40,7 +53,7 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
     <>
       {/* Top Announcement Bar - Not sticky, hidden on mobile */}
       <div className="hidden md:block bg-gray-900 text-white py-1.5 px-4 sm:px-6 lg:px-8 border-b border-white/5">
-        <div className="max-w-[1440px] mx-auto flex items-center justify-between text-[9px] sm:text-[10px] font-bold tracking-[0.1em] uppercase">
+        <div className="max-w-[1440px] mx-auto flex items-center justify-between text-[9px] sm:text-[10px] font-black tracking-[0.1em] uppercase">
           <div className="flex items-center gap-3 sm:gap-6">
             <span className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors cursor-pointer">
               <Phone className="w-2.5 h-2.5 text-emerald-400" />
@@ -58,13 +71,10 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
             </div>
             <div className="hidden sm:block h-2.5 w-[1px] bg-white/10" />
             <button 
-              onClick={(e) => {
-                if (window.innerWidth < 640) navigate('/track-order');
-              }}
+              onClick={() => navigate('/track-order')}
               className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors font-black"
             >
-              <span className="sm:hidden">Track Order</span>
-              <span className="hidden sm:inline">BN</span>
+              BN
             </button>
           </div>
         </div>
@@ -72,9 +82,9 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
 
       <header className="sticky top-0 z-50">
         {/* Main Navbar */}
-        <nav className="bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm">
+        <nav className="bg-white/90 backdrop-blur-2xl border-b border-gray-100 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-12 sm:h-20 gap-4 sm:gap-8">
+          <div className="flex items-center justify-between h-14 sm:h-20 gap-4 sm:gap-8">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0 flex items-center">
               {settings?.site_logo ? (
@@ -88,12 +98,16 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
 
             {/* Search Bar - Desktop */}
             <div className="hidden md:flex flex-1 max-w-2xl relative">
-              <div className="flex items-center w-full bg-gray-50 border border-gray-100 rounded-xl overflow-hidden focus-within:ring-4 focus-within:ring-[#0056b3]/10 focus-within:border-[#0056b3]/30 transition-all shadow-sm">
+              <form 
+                onSubmit={handleSearch}
+                className="flex items-center w-full bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:border-emerald-500/30 transition-all shadow-sm"
+              >
                 {/* Custom Category Selector */}
                 <div className="relative">
                   <button
+                    type="button"
                     onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                    className="flex items-center gap-2 px-4 border-r border-gray-200 bg-gray-50/50 h-12 text-[11px] font-bold text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap uppercase tracking-wider"
+                    className="flex items-center gap-2 px-6 border-r border-gray-200 bg-gray-50/50 h-12 text-[10px] font-black text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap uppercase tracking-widest"
                   >
                     {selectedCategory}
                     <ChevronRight className={cn("w-3 h-3 transition-transform", isCategoryDropdownOpen ? "rotate-90" : "rotate-0")} />
@@ -105,23 +119,26 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-[60]"
+                        className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-[60] overflow-hidden"
                       >
-                        {categories.map((cat) => (
-                          <button
-                            key={cat}
-                            onClick={() => {
-                              setSelectedCategory(cat);
-                              setIsCategoryDropdownOpen(false);
-                            }}
-                            className={cn(
-                              "w-full text-left px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors",
-                              selectedCategory === cat ? "text-[#0056b3] bg-blue-50" : "text-gray-600 hover:bg-gray-50"
-                            )}
-                          >
-                            {cat}
-                          </button>
-                        ))}
+                        <div className="max-h-80 overflow-y-auto no-scrollbar">
+                          {categoriesList.map((cat) => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCategory(cat);
+                                setIsCategoryDropdownOpen(false);
+                              }}
+                              className={cn(
+                                "w-full text-left px-5 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors",
+                                selectedCategory === cat ? "text-emerald-600 bg-emerald-50" : "text-gray-500 hover:bg-gray-50"
+                              )}
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -132,13 +149,14 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="I'm searching for..."
-                    className="w-full bg-transparent py-3 pl-4 pr-10 text-sm outline-none text-gray-900 placeholder:text-gray-400"
+                    placeholder="Search for products, categories..."
+                    className="w-full bg-transparent py-3 pl-5 pr-10 text-sm outline-none text-gray-900 font-bold placeholder:text-gray-300"
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                   />
                   {searchQuery && (
                     <button
+                      type="button"
                       onClick={() => setSearchQuery("")}
                       className="absolute right-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
                     >
@@ -147,11 +165,14 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
                   )}
                 </div>
 
-                <button className="bg-[#0056b3] text-white px-6 h-12 hover:bg-[#004494] transition-colors flex items-center gap-2 group">
+                <button 
+                  type="submit"
+                  className="bg-gray-900 text-white px-8 h-12 hover:bg-black transition-all flex items-center gap-2 group shadow-lg shadow-gray-200"
+                >
                   <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  <span className="hidden lg:inline text-[11px] font-black uppercase tracking-widest">Search</span>
+                  <span className="hidden lg:inline text-[10px] font-black uppercase tracking-[0.2em]">Search</span>
                 </button>
-              </div>
+              </form>
               
               {/* Quick Search Suggestions */}
               <AnimatePresence>
@@ -160,25 +181,41 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 p-5 z-50"
+                    className="absolute top-full left-0 right-0 mt-3 bg-white rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-gray-100 p-8 z-50"
                   >
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-10">
                       <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Popular Searches</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">Trending Searches</p>
                         <div className="flex flex-wrap gap-2">
-                          {['Headphones', 'Smart Watch', 'Nike Shoes', 'iPhone 15', 'Gaming Laptop'].map(tag => (
-                            <button key={tag} className="px-3 py-1.5 rounded-lg bg-gray-50 text-[11px] font-bold text-gray-600 hover:bg-blue-50 hover:text-[#0056b3] transition-all">
+                          {['Mustard Oil', 'Organic Honey', 'Premium Dates', 'Cashew Nuts', 'Saffron', 'Ghee'].map(tag => (
+                            <button 
+                              key={tag} 
+                              onClick={() => {
+                                setSearchQuery(tag);
+                                navigate(`/allproducts?search=${tag}`);
+                              }}
+                              className="px-4 py-2 rounded-xl bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-emerald-600 hover:text-white hover:shadow-lg hover:shadow-emerald-500/20 transition-all border border-gray-100"
+                            >
                               {tag}
                             </button>
                           ))}
                         </div>
                       </div>
-                      <div className="pt-4 border-t border-gray-50">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Recent Views</p>
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 animate-pulse" />
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 animate-pulse" />
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 animate-pulse" />
+                      <div className="border-l border-gray-100 pl-10">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">Quick Categories</p>
+                        <div className="grid grid-cols-1 gap-3">
+                          {topCategories.slice(0, 4).map((cat: any) => (
+                            <button 
+                              key={cat.id}
+                              onClick={() => navigate(`/allproducts?category=${cat.slug}`)}
+                              className="flex items-center gap-3 group text-left"
+                            >
+                              <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-emerald-50 transition-colors">
+                                {cat.image ? <img src={cat.image} className="w-6 h-6 object-contain" /> : <ShoppingBag className="w-4 h-4 text-gray-400" />}
+                              </div>
+                              <span className="text-[11px] font-black uppercase tracking-widest text-gray-500 group-hover:text-emerald-600 transition-colors">{cat.name}</span>
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -186,6 +223,7 @@ export default function Navbar({ onCartClick, onWishlistClick, onProfileClick, c
                 )}
               </AnimatePresence>
             </div>
+
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-8">

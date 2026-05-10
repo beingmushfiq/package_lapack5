@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import type { CMSSectionProps } from '../types';
 import { resolveStyles } from '../StyleEngine';
+import { getImageUrl } from '../../lib/utils';
 
 interface GalleryImage {
   url: string;
@@ -48,7 +49,7 @@ export default function ImageGallerySection({ section }: CMSSectionProps) {
               }`}
             >
               <img
-                src={img.url}
+                src={getImageUrl(img.url)}
                 alt={img.alt || section.title || 'Gallery Image'}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 aspect-square"
               />

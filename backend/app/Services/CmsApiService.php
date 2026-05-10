@@ -164,7 +164,7 @@ class CmsApiService
                 'name' => $s->name,
                 'type' => $s->type ?? 'custom',
                 'position' => $s->position ?? 'head',
-                'script' => $s->script,
+                'script' => $s->script_code,
             ])->toArray();
         });
     }

@@ -64,5 +64,6 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders', [\App\Http\Controllers\Api\OrderController::class, 'index']);
         Route::get('/orders/{order}', [\App\Http\Controllers\Api\OrderController::class, 'show']);
         Route::post('/orders', [\App\Http\Controllers\Api\OrderController::class, 'store']);
+        Route::post('/orders/{order}/pay', [\App\Http\Controllers\Api\PaymentController::class, 'initiate']);
     });
 });

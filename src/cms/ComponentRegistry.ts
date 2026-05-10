@@ -9,6 +9,13 @@ import type { CMSSectionProps, CMSSectionType } from './types';
 
 // ─── Existing Feature Sections (wrapped) ─────────────────────
 const ProductGridSection = lazy(() => import('./sections/ProductGridSection'));
+const HeroSliderSection = lazy(() => import('./sections/HeroSliderSection'));
+const CategoryGridSection = lazy(() => import('./sections/CategoryGridSection'));
+const BlogGridSection = lazy(() => import('./sections/BlogGridSection'));
+const BrandsCarouselSection = lazy(() => import('./sections/BrandsCarouselSection'));
+const ReviewsSection = lazy(() => import('./sections/ReviewsSection'));
+const FaqAccordionSection = lazy(() => import('./sections/FAQAccordionSection'));
+const NewsletterSection = lazy(() => import('./sections/NewsletterSection'));
 
 // ─── New CMS Sections ─────────────────────────────────────────
 const CountdownTimerSection = lazy(() => import('./sections/CountdownTimerSection'));
@@ -17,6 +24,9 @@ const TestimonialSliderSection = lazy(() => import('./sections/TestimonialSlider
 const FlashDealBannerSection = lazy(() => import('./sections/FlashDealBannerSection'));
 const ImageGallerySection = lazy(() => import('./sections/ImageGallerySection'));
 const ProductRecommendationSection = lazy(() => import('./sections/ProductRecommendationSection'));
+const TabsSection = lazy(() => import('./sections/TabsSection'));
+const AccordionSection = lazy(() => import('./sections/AccordionSection'));
+const CategorySidebarSection = lazy(() => import('./sections/CategorySidebarSection'));
 
 // ─── Generic CMS Components ───────────────────────────────────
 const RichTextBlock = lazy(() => import('./components/RichTextBlock'));
@@ -42,6 +52,13 @@ const registry: Record<string, ComponentType<CMSSectionProps>> = {
   // ── Existing sections
   product_grid: ProductGridSection,
   product_carousel: ProductGridSection,   // reuses grid in carousel mode
+  hero_slider: HeroSliderSection,
+  category_grid: CategoryGridSection,
+  blog_grid: BlogGridSection,
+  brands_carousel: BrandsCarouselSection,
+  reviews: ReviewsSection,
+  faq_accordion: FaqAccordionSection,
+  newsletter: NewsletterSection,
 
   // ── Generic CMS components
   promotional_banner: ImageBanner,
@@ -60,6 +77,9 @@ const registry: Record<string, ComponentType<CMSSectionProps>> = {
   flash_deal_banner: FlashDealBannerSection,
   image_gallery: ImageGallerySection,
   product_recommendation: ProductRecommendationSection,
+  tabs_section: TabsSection,
+  accordion_section: AccordionSection,
+  category_sidebar: CategorySidebarSection,
 
   // ── Aliases (for flexibility)
   html_embed: CustomHTML,                  // alias for custom_html

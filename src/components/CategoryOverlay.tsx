@@ -1,6 +1,6 @@
 import { X, Grid, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { HIERARCHICAL_CATEGORIES } from "../data/categories";
+import { useCategories } from "../lib/queries";
 import { useState, useMemo } from "react";
 import { cn } from "../lib/utils";
 
@@ -16,30 +16,33 @@ interface FlatCategory {
 
 export default function CategoryOverlay({ isOpen, onClose }: CategoryOverlayProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const { data: apiCategories } = useCategories();
 
   const allCategories = useMemo(() => {
     const flat: FlatCategory[] = [];
-    HIERARCHICAL_CATEGORIES.forEach(parent => {
+    const categories = apiCategories || [];
+
+    categories.forEach((parent: any) => {
       flat.push({ 
         name: parent.name, 
-        image: `https://picsum.photos/seed/${parent.name.replace(/\s+/g, '').toLowerCase()}/200/200` 
+        image: parent.image || `https://picsum.photos/seed/${parent.name.replace(/\s+/g, '').toLowerCase()}/200/200` 
       });
-      parent.subCategories?.forEach(sub => {
+      parent.sub_categories?.forEach((sub: any) => {
         flat.push({ 
           name: sub.name, 
-          image: `https://picsum.photos/seed/${sub.name.replace(/\s+/g, '').toLowerCase()}/200/200` 
+          image: sub.image || `https://picsum.photos/seed/${sub.name.replace(/\s+/g, '').toLowerCase()}/200/200` 
         });
-        sub.childCategories.forEach(child => {
+        sub.child_categories?.forEach((child: any) => {
           flat.push({ 
-            name: child, 
-            image: `https://picsum.photos/seed/${child.replace(/\s+/g, '').toLowerCase()}/200/200` 
+            name: child.name || child, 
+            image: `https://picsum.photos/seed/${(child.name || child).replace(/\s+/g, '').toLowerCase()}/200/200` 
           });
         });
       });
     });
     // Remove duplicates if any
     return Array.from(new Map(flat.map(item => [item.name, item])).values());
-  }, []);
+  }, [apiCategories]);
 
   const filteredCategories = allCategories.filter(cat => 
     cat.name.toLowerCase().includes(searchQuery.toLowerCase())
